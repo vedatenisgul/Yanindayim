@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Merhaba, ne yapmak istiyorsun?</h1>
+
+    <div class="card-grid">
+        {% if guides %}
+        {% for guide in guides %}
+        <a href="/guide/{{ guide.id }}" class="feature-card">
+            {% if guide.image_url %}
+            <div class="card-image-container">
+                <img src="{{ guide.image_url }}" alt="{{ guide.title }}" class="card-image">
+            </div>
+            {% endif %}
+            <div class="card-content">
+                <h3>{{ guide.title }}</h3>
+            </div>
+        </a>
+        {% endfor %}
+        {% else %}
+        <div class="empty-guides-message">
+            <p>Henüz rehber eklenmemiş.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="hero-separator"></div>
+
+    <a href="/search" class="nav-button secondary large">Başka bir şey yapmak istiyorum</a>
+</div>
+{% endblock %}

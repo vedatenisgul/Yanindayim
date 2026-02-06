@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Önizleme: {{ guide.title }} - Yanındayım{% endblock %}
+
+{% block content %}
+<script>
+    document.documentElement.dataset.guideId = "{{ guide.id }}";
+</script>
+<div class="guide-page">
+    <!-- Admin Controls Overlay -->
+    <div class="admin-preview-controls">
+        <div class="controls-content">
+            <span class="preview-badge">Önizleme Modu</span>
+            <div class="preview-actions">
+                <a href="/admin/guides/{{ guide.id }}/edit" class="nav-button edit-btn small">Düzenle</a>
+                {% if guide.status == 'draft' %}
+                <form action="/admin/guides/{{ guide.id }}" method="post" style="display: inline;">
+                    <input type="hidden" name="title" value="{{ guide.title }}">
+                    <input type="hidden" name="content" value="{{ guide.content }}">
+                    <input type="hidden" name="status" value="published">
+                    <button type="submit" class="nav-button primary small">Yayınla</button>
+                </form>
+                {% endif %}
+                <a href="/admin" class="nav-button secondary small">Kapat</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="guide-container" style="margin-top: 60px;">
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-track">
+                <div id="progress-bar" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <span id="progress-text">Hazırlanıyor...</span>
+        </div>
+
+        <h1 class="guide-main-title">{{ guide.title }}</h1>
+
+        <!-- Step Container -->
+        <div id="steps-wrapper" class="steps-wrapper">
+            {% if guide.steps %}
+            {% for step in guide.steps %}
+            <div class="step-card {{ 'active' if loop.first else '' }}" data-step="{{ loop.index }}"
+                data-total="{{ guide.steps|length }}">
+                <div class="step-header">
+                    <span class="step-badge">ADIM {{ step.step_number }}</span>
+                    <h2 class="step-title">{{ step.title }}</h2>
+                </div>
+
+                {% if step.image_url %}
+                <div class="step-image-container">
+                    <img src="{{ step.image_url }}" alt="{{ step.title }}" class="step-image">
+                </div>
+                {% endif %}
+
+                <div class="step-description">
+                    {{ step.description }}
+                </div>
+
+                <div class="step-actions">
+                    {% if not loop.first %}
+                    <button onclick="prevStep()" class="nav-button secondary">← Geri</button>
+                    {% else %}
+                    <div></div> <!-- Spacer -->
+                    {% endif %}
+
+                    <div class="main-actions">
+                        <button onclick="showProblem()" class="nav-button secondary danger">Sorun Var</button>
+                        {% if loop.last %}
+                        <button onclick="finishGuide()" class="nav-button primary success">Tamamlandı ✓</button>
+                        {% else %}
+                        <button onclick="nextStep()" class="nav-button primary">Tamamlandı →</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="step-card active">
+                <p class="empty-state">Bu rehber henüz aşamalara bölünmemiş. Lütfen daha sonra tekrar kontrol edin.</p>
+                <a href="/admin" class="nav-button primary">Dashboard'a Dön</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Completion Modal (Hidden by default) -->
+        <div id="completion-card" class="step-card" style="display: none; text-align: center;">
+            <div class="success-icon">✓</div>
+            <h2 class="step-title">Tebrikler!</h2>
+            <p class="step-description">Bu rehberi başarıyla tamamladınız.</p>
+            <div class="step-actions" style="justify-content: center;">
+                <a href="/admin" class="nav-button primary">Dashboard'a Dön</a>
+            </div>
+        </div>
+
+        <!-- AI Guidance Modal -->
+        <div id="ai-support-modal" class="support-modal-overlay" style="display: none;">
+            <div class="support-modal-card">
+                <div class="support-modal-header">
+                    <div class="ai-avatar">🤖</div>
+                    <h3>Yanındayım Desteği (Önizleme)</h3>
+                </div>
+                <div class="support-modal-body">
+                    <p id="ai-guidance-text">Yükleniyor...</p>
+                </div>
+                <div class="support-modal-footer">
+                    <button onclick="closeSupportModal()" class="nav-button primary">Anladım, Teşekkürler</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/guide-steps.js"></script>
+
+<style>
+    /* Admin Controls Overlay */
+    .admin-preview-controls {
+        position: fixed;
+        top: 80px;
+        /* Below navbar */
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 100;
+        padding: 12px 24px;
+        display: flex;
+        justify-content: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .controls-content {
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .preview-badge {
+        background: #e3f2fd;
+        color: #007AFF;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .preview-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .nav-button.small {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .nav-button.edit-btn {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: none;
+        text-decoration: none;
+    }
+
+    .nav-button.edit-btn:hover {
+        background: #c8e6c9;
+    }
+</style>
+{% endblock %}

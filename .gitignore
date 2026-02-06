@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.py[cod]
+*.swp
+.DS_Store
+.venv/
+app/static/generated/
+venv/
+node_modules/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/

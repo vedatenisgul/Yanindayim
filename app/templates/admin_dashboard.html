@@ -1,0 +1,754 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Yanındayım{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="admin-container">
+        <h1 class="admin-title">Admin Dashboard</h1>
+        <p class="admin-subtitle">Rehber oluşturun ve yönetin</p>
+
+        <!-- AI Generation Section -->
+        <div class="admin-section">
+            <h2 class="section-title">AI ile Rehber Oluştur</h2>
+            <form id="ai-generate-form" class="ai-form">
+                <div class="search-box-wrapper">
+                    <input type="text" name="prompt" id="ai-prompt" class="search-input"
+                        placeholder="Hangi konuda rehber oluşturmak istiyorsunuz? Örn: MHRS randevu alma" required>
+                </div>
+                <button type="submit" class="ai-generate-btn" id="generate-btn">
+                    <svg class="ai-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L14.39 8.26L20 10.5L14.39 12.74L12 19L9.61 12.74L4 10.5L9.61 8.26L12 2Z"
+                            fill="currentColor" />
+                    </svg>
+                    <span id="btn-text">AI ile Rehber Oluştur</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Generated Preview Section (Dynamic) -->
+        <div id="ai-preview-container" style="display: none;">
+            <div class="admin-section preview-section">
+                <h2 class="section-title">Oluşturulan Rehber Önizlemesi</h2>
+                <div class="preview-card">
+                    <h3 class="preview-title" id="preview-title"></h3>
+                    <div class="preview-steps-list" id="preview-steps"></div>
+
+                    <form action="/admin/guides/create_structured" method="post" class="preview-actions">
+                        <input type="hidden" name="title" id="hidden-title">
+                        <input type="hidden" name="steps_json" id="hidden-steps">
+                        <input type="hidden" name="help_options_json" id="hidden-help-options">
+                        <input type="hidden" name="status" id="hidden-status" value="published">
+                        <div class="form-group toggle-group" style="margin: 20px 0;">
+                            <label class="checkbox-label"
+                                style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; background: #f0f7ff; border-radius: 8px; border: 1px solid #cce3ff; color: #0056b3; font-weight: 600;">
+                                <input type="checkbox" name="generate_ai_images" value="true"
+                                    style="width: 18px; height: 18px;">
+                                <span>Görselleri Yapay Zeka ile Oluştur (Yavaş çalışır)</span>
+                            </label>
+                        </div>
+                        <button type="submit" id="confirm-publish-btn" class="nav-button primary">Onayla ve
+                            Yayınla</button>
+                        <button type="button" id="confirm-draft-btn" onclick="saveAsDraft()"
+                            class="nav-button secondary">Taslak Olarak
+                            Kaydet</button>
+                        <button type="button" onclick="hidePreview()" class="nav-button secondary">İptal</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Creation Section -->
+        <div class="admin-section">
+            <h2 class="section-title">Manuel Rehber Oluştur</h2>
+            <a href="/admin/guides/new" class="nav-button secondary">Yeni Rehber Ekle</a>
+        </div>
+
+        <!-- Request Ideas Section -->
+        <div class="admin-section">
+            <h2 class="section-title">Rehber Talepleri (Kullanıcı İlaveleri)</h2>
+            {% if ideas %}
+            <div class="guides-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Konu</th>
+                            <th>Talep Sayısı</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for idea in ideas %}
+                        <tr>
+                            <td style="font-weight: 500;">{{ idea.title }}</td>
+                            <td>{{ idea.count }}</td>
+                            <td class="actions-cell">
+                                <form action="/admin/generate" method="post" style="display: inline;"
+                                    class="idea-generate-form">
+                                    <input type="hidden" name="prompt" value="{{ idea.title }}">
+                                    <button type="submit" class="action-btn test">AI ile Oluştur</button>
+                                </form>
+                                <button type="button" class="action-btn delete"
+                                    onclick="deleteRow(this, '/admin/ideas/{{ idea.id }}/delete', 'Bu talebi silmek istediğinize emin misiniz?', 'Talep')">Sil</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="empty-state">Henüz bir rehber talebi bulunmuyor.</p>
+            {% endif %}
+        </div>
+
+        <!-- Reported Problems Section -->
+        <div class="admin-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 class="section-title" style="margin-bottom: 0;">Bildirilen Sorunlar (Kullanıcılar Nerede Takıldı?)
+                </h2>
+                {% if step_problems %}
+                <button type="button" class="action-btn delete" style="padding: 4px 10px; font-size: 11px;"
+                    onclick="clearAll('/admin/problems/clear', 'Tüm sorun bildirimlerini silmek istediğinize emin misiniz?', '#problems-tbody-container')">Tümünü
+                    Temizle</button>
+                {% endif %}
+            </div>
+            {% if step_problems %}
+            <div class="guides-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rehber</th>
+                            <th>Aşama</th>
+                            <th>Zaman</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for problem in step_problems %}
+                        <tr>
+                            <td>{{ problem.guide.title if problem.guide else 'Silinmiş Rehber' }}</td>
+                            <td><span class="step-num"
+                                    style="width: 24px; height: 24px; font-size: 12px; display: inline-flex;">{{
+                                    problem.step_number }}</span></td>
+                            <td style="font-size: 0.8rem; color: var(--text-secondary);">{{
+                                problem.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td class="actions-cell">
+                                <button type="button" class="action-btn delete"
+                                    onclick="deleteRow(this, '/admin/problems/{{ problem.id }}/delete', 'Bu bildirimi silmek istediğinize emin misiniz?', 'Sorun bildirimi')">Sil</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="empty-state">Henüz bir sorun bildirimi bulunmuyor. Her şey yolunda!</p>
+            {% endif %}
+        </div>
+
+        <!-- Existing Guides Section -->
+        <div class="admin-section">
+            <h2 class="section-title">Mevcut Rehberler</h2>
+            {% if guides %}
+            <div class="guides-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Başlık</th>
+                            <th>Durum</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for guide in guides %}
+                        <tr>
+                            <td>{{ guide.id }}</td>
+                            <td>{{ guide.title }}</td>
+                            <td>
+                                <span class="status-badge {{ guide.status }}">
+                                    {{ 'Yayında' if guide.status == 'published' else 'Taslak' }}
+                                </span>
+                            </td>
+                            <td class="actions-cell">
+                                <a href="/admin/guides/{{ guide.id }}/test" class="action-btn test">Önizle</a>
+                                <a href="/admin/guides/{{ guide.id }}/edit" class="action-btn edit">Düzenle</a>
+                                <button type="button" class="action-btn delete"
+                                    onclick="deleteRow(this, '/admin/guides/{{ guide.id }}/delete', 'Bu rehberi silmek istediğinize emin misiniz?', 'Rehber')">Sil</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="empty-state">Henüz rehber bulunmuyor. Yukarıdaki seçeneklerle yeni bir rehber oluşturun.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .admin-page {
+        min-height: 100vh;
+        padding-top: 120px;
+        padding-bottom: 60px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .admin-container {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .admin-title {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+
+    .admin-subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 40px;
+        text-align: center;
+    }
+
+    .admin-section {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: var(--text-primary);
+    }
+
+    .ai-form .search-input {
+        width: 100%;
+    }
+
+    .preview-section {
+        background: #f8f9fa;
+        border: 2px solid var(--accent-color);
+    }
+
+    .preview-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+    }
+
+    .preview-title {
+        font-size: 20px;
+        margin-bottom: 16px;
+    }
+
+    .preview-content {
+        background: #f5f5f5;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .preview-content pre {
+        white-space: pre-wrap;
+        font-family: var(--font-family);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .preview-actions {
+        margin-bottom: 12px;
+    }
+
+    .preview-buttons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .guides-table {
+        overflow-x: auto;
+    }
+
+    .guides-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .guides-table th,
+    .guides-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .guides-table th {
+        font-weight: 600;
+        background: #f8f9fa;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-secondary);
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-badge.published {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-badge.draft {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-btn {
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        background: #f0f0f0;
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+
+    .action-btn:hover {
+        background: #e0e0e0;
+    }
+
+    .action-btn.test {
+        background: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .action-btn.test:hover {
+        background: #bbdefb;
+    }
+
+    .action-btn.edit {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .action-btn.edit:hover {
+        background: #c8e6c9;
+    }
+
+    .action-btn.delete {
+        background: #fce4ec;
+        color: #c62828;
+    }
+
+    .action-btn.delete:hover {
+        background: #ffcdd2;
+    }
+
+    .empty-state {
+        color: var(--text-secondary);
+        text-align: center;
+        padding: 40px;
+    }
+
+    /* Toast System */
+    .toast-container {
+        position: fixed;
+        bottom: 32px;
+        right: 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 9999;
+    }
+
+    .toast {
+        background: #1d1d1f;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        min-width: 250px;
+    }
+
+    .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .toast.error {
+        border-left: 4px solid #FF3B30;
+    }
+
+    .toast.success {
+        border-left: 4px solid #34C759;
+    }
+
+    .toast-icon {
+        width: 24px;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+
+    .ai-generate-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        background: #8e8e93;
+    }
+
+    .nav-button.secondary {
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .nav-button.secondary:hover {
+        color: var(--text-primary);
+        border-color: var(--text-primary);
+    }
+
+    .ai-generate-btn {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        margin-top: 16px;
+    }
+
+    .ai-generate-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    }
+
+    .ai-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Preview Steps Styling */
+    .preview-steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .preview-step-item {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+    }
+
+    .preview-step-item .step-num {
+        width: 32px;
+        height: 32px;
+        background: var(--accent-color, #007AFF);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .preview-step-item .step-details {
+        flex: 1;
+    }
+
+    .preview-step-item .step-details h4 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .preview-step-item .step-details p {
+        margin: 0 0 12px 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .step-preview-img {
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<!-- Toast Notifications -->
+<div id="toast-container" class="toast-container"></div>
+
+<script>
+    // Generic AJAX Action Handler
+    async function adminAction(url, method = 'POST', data = null, successMsg = 'İşlem başarılı') {
+        try {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+            if (data) options.body = JSON.stringify(data);
+
+            const response = await fetch(url, options);
+            const result = await response.json();
+
+            if (result.success) {
+                showToast(successMsg, 'success');
+                return true;
+            } else {
+                showToast(result.error || 'Bir hata oluştu', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('AJAX Error:', error);
+            showToast('Bağlantı hatası oluştu', 'error');
+            return false;
+        }
+    }
+
+    // Row Deletion Helper
+    async function deleteRow(btn, url, confirmMsg, sectionName) {
+        if (!confirm(confirmMsg)) return;
+
+        const success = await adminAction(url, 'POST', null, `${sectionName} silindi`);
+        if (success) {
+            const row = btn.closest('tr');
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(20px)';
+            setTimeout(() => {
+                row.remove();
+                // Check if table is empty
+                const tbody = row.parentElement;
+                if (tbody && tbody.children.length === 0) {
+                    location.reload(); // Refresh to show empty state
+                }
+            }, 300);
+        }
+    }
+
+    // Global Clear Handler
+    async function clearAll(url, confirmMsg, sectionId) {
+        if (!confirm(confirmMsg)) return;
+
+        const success = await adminAction(url, 'POST', null, 'Tüm kayıtlar temizlendi');
+        if (success) {
+            const section = document.querySelector(sectionId);
+            if (section) {
+                section.innerHTML = '<p class="empty-state">Henüz bir kayıt bulunmuyor.</p>';
+            }
+            showToast('Tüm bildirimler temizlendi', 'success');
+        }
+    }
+
+    // Toast Notification System
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            <div class="toast-icon">${type === 'success' ? '✓' : '✕'}</div>
+            <div class="toast-message">${message}</div>
+        `;
+        container.appendChild(toast);
+
+        // Animate in
+        setTimeout(() => toast.classList.add('show'), 10);
+
+        // Remove after 3s
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // AI Generation Logic
+    document.addEventListener('DOMContentLoaded', () => {
+        // Main Form
+        const aiForm = document.getElementById('ai-generate-form');
+        if (aiForm) {
+            aiForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const prompt = document.getElementById('ai-prompt').value;
+                await generateGuide(prompt);
+            });
+        }
+
+        // Idea Buttons (intercept forms in the table)
+        document.querySelectorAll('.idea-generate-form').forEach(form => {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const prompt = form.querySelector('input[name="prompt"]').value;
+
+                // Optional: Scroll to top to see preview
+                document.querySelector('.admin-page').scrollIntoView({ behavior: 'smooth' });
+
+                // Populate main input for feedback
+                const mainInput = document.getElementById('ai-prompt');
+                if (mainInput) mainInput.value = prompt;
+
+                await generateGuide(prompt);
+            });
+        });
+    });
+
+    async function generateGuide(prompt) {
+        const btn = document.getElementById('generate-btn');
+        const btnText = document.getElementById('btn-text');
+
+        // Disable main button state
+        const originalText = btnText.textContent;
+        const originalDisabled = btn.disabled;
+
+        btn.disabled = true;
+        btnText.textContent = 'Oluşturuluyor...';
+
+        try {
+            const formData = new FormData();
+            formData.append('prompt', prompt);
+
+            const response = await fetch('/admin/generate', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            console.log("AI Response:", data);
+
+            if (data.success) {
+                showPreview(data);
+                showToast('Rehber başarıyla oluşturuldu', 'success');
+            } else {
+                showToast('Oluşturma başarısız', 'error');
+            }
+        } catch (error) {
+            console.error("Fetch error:", error);
+            showToast('Hata: AI servisine ulaşılamadı', 'error');
+        } finally {
+            btn.disabled = false;
+            btnText.textContent = 'AI ile Rehber Oluştur';
+        }
+    }
+
+    function showPreview(data) {
+        const container = document.getElementById('ai-preview-container');
+        const title = document.getElementById('preview-title');
+        const stepsList = document.getElementById('preview-steps');
+        const hiddenTitle = document.getElementById('hidden-title');
+        const hiddenSteps = document.getElementById('hidden-steps');
+        const hiddenHelp = document.getElementById('hidden-help-options');
+
+        title.textContent = data.title;
+        hiddenTitle.value = data.title;
+        hiddenSteps.value = data.steps_json;
+        if (hiddenHelp) {
+            hiddenHelp.value = data.help_options_json;
+        }
+        console.log("Steps JSON set to:", hiddenSteps.value);
+
+        stepsList.innerHTML = data.steps.map(step => `
+            <div class="preview-step-item">
+                <div class="step-num">${step.step_number}</div>
+                <div class="step-details">
+                    <h4>${step.title}</h4>
+                    <p>${step.description}</p>
+                    ${step.image_url ? `<img src="${step.image_url}" class="step-preview-img">` : ''}
+                </div>
+            </div>
+        `).join('');
+
+        container.style.display = 'block';
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function hidePreview() {
+        document.getElementById('ai-preview-container').style.display = 'none';
+    }
+
+    function saveAsDraft() {
+        const publishBtn = document.getElementById('confirm-publish-btn');
+        const draftBtn = document.getElementById('confirm-draft-btn');
+
+        if (publishBtn) publishBtn.disabled = true;
+        if (draftBtn) {
+            draftBtn.disabled = true;
+            draftBtn.classList.add('btn-loading');
+        }
+
+        document.getElementById('hidden-status').value = 'draft';
+        document.querySelector('.preview-actions').submit();
+    }
+
+    // Add submit listener to preview-actions form for the "Onayla ve Yayınla" case
+    document.addEventListener('DOMContentLoaded', () => {
+        const previewForm = document.querySelector('.preview-actions');
+        if (previewForm) {
+            previewForm.addEventListener('submit', (e) => {
+                const publishBtn = document.getElementById('confirm-publish-btn');
+                const draftBtn = document.getElementById('confirm-draft-btn');
+
+                if (publishBtn) {
+                    publishBtn.disabled = true;
+                    publishBtn.classList.add('btn-loading');
+                }
+                if (draftBtn) draftBtn.disabled = true;
+            });
+        }
+    });
+</script>
+{% endblock %}

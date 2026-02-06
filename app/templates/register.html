@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Kayıt Ol - Yanındayım{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">Hesap Oluşturun</h2>
+        <p class="auth-subtitle">Yanındayım ailesine katılın</p>
+
+        {% if error %}
+        <div style="color: red; text-align: center; margin-bottom: 20px;">{{ error }}</div>
+        {% endif %}
+        <form class="auth-form" action="/register" method="post">
+            <div class="form-group">
+                <label for="name">Ad Soyad</label>
+                <input type="text" id="name" name="name" placeholder="Adınız Soyadınız" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">E-posta Adresi</label>
+                <input type="email" id="email" name="email" placeholder="ornek@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Şifre</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Şifre Tekrar</label>
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="nav-button primary full-width">Kayıt Ol</button>
+        </form>
+
+        <p class="auth-footer">
+            Zaten hesabınız var mı? <a href="/login">Giriş yapın</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

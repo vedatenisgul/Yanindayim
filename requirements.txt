@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+jinja2
+python-multipart
+bcrypt
+itsdangerous
+google-generativeai
+huggingface_hub
+Pillow
+requests
+python-dotenv
