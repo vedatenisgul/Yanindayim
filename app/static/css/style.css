@@ -796,8 +796,28 @@ button.reading-text-target .reading-eye-button,
     position: fixed;
     top: 100px;
     left: 50%;
-    transform: translateX(-50%) translateY(-20px);
-    background: #ef4444;
+
+    /* PWA Install Button */
+    #pwa-install-btn {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+}
+
+.reading-stop-floating {
     color: white;
     padding: 8px 16px;
     border-radius: 30px;

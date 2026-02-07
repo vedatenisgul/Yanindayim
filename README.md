@@ -18,9 +18,9 @@
 - **Backend**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.9+)
 - **Database**: [PostgreSQL](https://www.postgresql.org/) with [SQLAlchemy ORM](https://www.sqlalchemy.org/)
 - **Frontend**: Jinja2 Templates, Vanilla CSS, Responsive Layout
-- **AI Integrations**: 
-    - [Google Gemini API](https://ai.google.dev/) (Content Generation)
-    - [Hugging Face Inference](https://huggingface.co/inference-endpoints) (Image Generation)
+- **AI Integrations**:
+  - [Google Gemini API](https://ai.google.dev/) (Content Generation)
+  - [Hugging Face Inference](https://huggingface.co/inference-endpoints) (Image Generation)
 - **Containerization**: [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
 
 ## 🚀 Getting Started
@@ -34,6 +34,7 @@
 ### Setup with Docker (Recommended)
 
 1. **Clone the repository**:
+
    ```bash
    git clone <repository-url>
    cd Yanındayım
@@ -41,19 +42,20 @@
 
 2. **Configure Environment Variables**:
    Copy the example environment file and fill in your keys:
+
    ```bash
    cp .env.example .env
    # Edit .env and add your GOOGLE_API_KEY, etc.
    ```
 
 3. **Start the application**:
+
    ```bash
    docker-compose up --build
    ```
 
 4. **Access the app**:
    Open [http://localhost:8000](http://localhost:8000) in your browser.
-
 
 ## 📂 Project Structure
 
@@ -77,14 +79,14 @@
 
 The following variables are required in your `.env` file:
 
-| Variable | Description |
-| :--- | :--- |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `GOOGLE_API_KEY` | Your Google Gemini API Key |
+| Variable              | Description                             |
+| :-------------------- | :-------------------------------------- |
+| `DATABASE_URL`        | PostgreSQL connection string            |
+| `GOOGLE_API_KEY`      | Your Google Gemini API Key              |
 | `HUGGINGFACE_API_KEY` | Hugging Face Token for image generation |
-| `SESSION_SECRET_KEY` | Secret key for session encryption |
-| `POSTGRES_USER` | DB User (if using Docker) |
-| `POSTGRES_PASSWORD` | DB Password (if using Docker) |
+| `SESSION_SECRET_KEY`  | Secret key for session encryption       |
+| `POSTGRES_USER`       | DB User (if using Docker)               |
+| `POSTGRES_PASSWORD`   | DB Password (if using Docker)           |
 
 ## 📄 License
 

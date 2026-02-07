@@ -8,6 +8,10 @@ from app.utils.ai_utils import get_calming_guidance, get_ai_help_response
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
+@router.get("/offline")
+async def offline_page(request: Request):
+    return templates.TemplateResponse("offline.html", {"request": request})
+
 @router.get("/")
 async def read_root(request: Request, db: Session = Depends(get_db)):
     # Get published guides for homepage
