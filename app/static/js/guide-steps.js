@@ -1,6 +1,77 @@
 // Interactive Guide Steps Logic
 let currentStep = 1;
 
+function getGuideId() {
+    // Try data attribute first
+    let guideId = document.documentElement.dataset.guideId;
+
+    if (!guideId) {
+        // Fallback robust URL parsing
+        const parts = window.location.pathname.split('/');
+        const segments = parts.filter(p => p.length > 0);
+
+        // Handle /admin/guides/1/test -> 1 is at index 2
+        // Handle /guide/1 -> 1 is at index 1
+        if (segments[segments.length - 1] === 'test') {
+            guideId = segments[segments.length - 2];
+        } else {
+            guideId = segments[segments.length - 1];
+        }
+    }
+    return guideId;
+}
+
+function saveProgress(stepNum) {
+    const guideId = getGuideId();
+    if (guideId) {
+        localStorage.setItem(`guide_progress_${guideId}`, stepNum);
+    }
+}
+
+function clearProgress() {
+    const guideId = getGuideId();
+    if (guideId) {
+        localStorage.removeItem(`guide_progress_${guideId}`);
+    }
+}
+
+function checkResume() {
+    const guideId = getGuideId();
+    if (!guideId) return;
+
+    const savedStep = localStorage.getItem(`guide_progress_${guideId}`);
+    if (savedStep && parseInt(savedStep) > 1) {
+        // Show resume modal
+        const modal = document.getElementById('resume-modal');
+        const stepNumSpan = document.getElementById('resume-step-num');
+
+        if (modal && stepNumSpan) {
+            stepNumSpan.textContent = savedStep;
+            modal.style.display = 'flex';
+            // Store for resume action
+            modal.dataset.savedStep = savedStep;
+        }
+    }
+}
+
+function resumeGuide() {
+    const modal = document.getElementById('resume-modal');
+    if (modal) {
+        const savedStep = parseInt(modal.dataset.savedStep || 1);
+        modal.style.display = 'none';
+        showStep(savedStep);
+    }
+}
+
+function restartGuide() {
+    const modal = document.getElementById('resume-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        clearProgress();
+        showStep(1);
+    }
+}
+
 function updateProgress() {
     const activeCard = document.querySelector('.step-card.active');
     if (!activeCard) return;
@@ -25,6 +96,7 @@ function showStep(stepNum) {
         nextCard.classList.add('active');
         currentStep = stepNum;
         updateProgress();
+        saveProgress(currentStep); // Save execution state
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         // Refresh reading mode for new step content
@@ -52,6 +124,7 @@ function finishGuide() {
         stepsWrapper.style.display = 'none';
         completionCard.style.display = 'block';
         completionCard.classList.add('active');
+        clearProgress(); // Clear saved state on completion
 
         const progressFill = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
@@ -65,28 +138,7 @@ async function showProblem() {
     if (!activeCard) return;
 
     const stepNum = parseInt(activeCard.dataset.step);
-
-    // Get guide ID: Try data attribute first, then robust URL parsing
-    let guideId = document.documentElement.dataset.guideId;
-
-    if (!guideId) {
-        // Fallback for logic if data attribute is missing
-        const parts = window.location.pathname.split('/');
-        // Filter out empty strings
-        const segments = parts.filter(p => p.length > 0);
-
-        // Handle /admin/guides/1/test -> 1 is at index 2 (0-based: admin, guides, 1, test)
-        // Handle /guide/1 -> 1 is at index 1 (guide, 1)
-
-        // Try the segment before 'test' if it exists
-        if (segments[segments.length - 1] === 'test') {
-            guideId = segments[segments.length - 2];
-        } else {
-            guideId = segments[segments.length - 1];
-        }
-    }
-
-    guideId = parseInt(guideId);
+    let guideId = getGuideId();
 
     const modal = document.getElementById('ai-support-modal');
     const guidanceText = document.getElementById('ai-guidance-text');
@@ -102,7 +154,7 @@ async function showProblem() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    guide_id: guideId,
+                    guide_id: parseInt(guideId),
                     step_number: stepNum
                 })
             });
@@ -130,4 +182,5 @@ function closeSupportModal() {
 // Initialize progress on load
 document.addEventListener('DOMContentLoaded', () => {
     updateProgress();
+    checkResume(); // Check for saved progress
 });

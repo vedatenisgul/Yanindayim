@@ -22,20 +22,21 @@ async def login_page(request: Request):
 @router.post("/login")
 async def login(request: Request, email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email).first()
+    
     if not user or not verify_password(password, user.hashed_password):
         return templates.TemplateResponse("login.html", {
             "request": request,
             "error": "Geçersiz e-posta veya şifre"
         })
     
-    # Create session with settings
     request.session["user"] = {
         "name": user.name, 
         "email": user.email, 
         "id": user.id, 
         "role": user.role
     }
-    return RedirectResponse(url="/", status_code=303)
+    response = RedirectResponse(url="/", status_code=303)
+    return response
 
 @router.get("/register")
 async def register_page(request: Request):
@@ -62,7 +63,6 @@ async def register(request: Request, name: str = Form(...), email: str = Form(..
     db.commit()
     db.refresh(new_user)
     
-    # Auto login after register with default settings
     request.session["user"] = {
         "name": new_user.name, 
         "email": new_user.email, 

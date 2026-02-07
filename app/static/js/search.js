@@ -1,12 +1,13 @@
-// Search and Microphone Support for Yanındayım
 (function () {
-    const searchInput = document.querySelector('.search-input');
+    const searchInput = document.querySelector('.hero-search-input');
     const micIcon = document.querySelector('.search-mic-icon');
     const searchClear = document.getElementById('search-clear');
-    const suggestionsList = document.querySelector('.suggestions-list');
-    const suggestionTitle = document.querySelector('.suggestion-title');
+    const mainGrid = document.getElementById('main-guides-grid');
 
-    const initialSuggestions = suggestionsList ? suggestionsList.innerHTML : '';
+    let originalGridContent = '';
+    if (mainGrid) {
+        originalGridContent = mainGrid.innerHTML;
+    }
 
     if (!searchInput) return;
 
@@ -18,25 +19,29 @@
         }
     }
 
+    function restoreGrid() {
+        if (mainGrid) {
+            mainGrid.innerHTML = originalGridContent;
+            if (window.YanindayimReadingMode && typeof window.YanindayimReadingMode.refresh === 'function') {
+                window.YanindayimReadingMode.refresh();
+            }
+        }
+    }
+
     if (searchClear) {
         searchClear.addEventListener('click', () => {
             searchInput.value = '';
             searchInput.focus();
             updateClearButton();
-            if (suggestionsList) {
-                suggestionsList.innerHTML = initialSuggestions;
-                // Add eye icons back to restored suggestions if reading mode is on
-                if (window.YanindayimReadingMode && typeof window.YanindayimReadingMode.refresh === 'function') {
-                    window.YanindayimReadingMode.refresh();
-                }
-            }
-            suggestionTitle.textContent = 'Bunu mu aramak istemiştiniz?';
+            restoreGrid();
         });
     }
 
-    // --- Search Logic ---
     async function performSearch(query) {
-        if (!query || query.length < 2) return;
+        if (!query || query.length < 2) {
+            if (query.length === 0) restoreGrid();
+            return;
+        }
 
         try {
             const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
@@ -48,41 +53,67 @@
     }
 
     function renderResults(results, query) {
-        if (!suggestionsList) return;
+        if (!mainGrid) return;
 
-        suggestionsList.innerHTML = '';
+        mainGrid.innerHTML = '';
 
         if (results.length === 0) {
-            suggestionTitle.textContent = '"' + query + '" için sonuç bulunamadı.';
+            const noResultCard = document.createElement('div');
+            noResultCard.className = 'feature-card no-results-card';
+            noResultCard.style.cursor = 'default';
+            noResultCard.style.minHeight = 'auto';
+            noResultCard.style.textAlign = 'center';
+            noResultCard.style.padding = '32px';
 
-            const requestContainer = document.createElement('div');
-            requestContainer.className = 'request-guide-container';
+            noResultCard.innerHTML = `
+                <div class="card-content" style="flex-direction: column; gap: 16px;">
+                    <h3 style="margin-bottom: 8px;">"${query}" için sonuç bulunamadı</h3>
+                    <p style="color: var(--text-secondary);">Bunun için bir rehber hazırlamamızı ister misiniz?</p>
+                    <button id="request-guide-btn" class="nav-button primary">Yazılması için Talep Et</button>
+                    <button id="clear-search-btn" class="nav-button secondary">Aramayı Temizle</button>
+                </div>
+            `;
 
-            const requestText = document.createElement('p');
-            requestText.textContent = 'Bunun için bir rehber hazırlamamızı ister misiniz?';
-            requestContainer.appendChild(requestText);
+            mainGrid.appendChild(noResultCard);
 
-            const requestBtn = document.createElement('button');
-            requestBtn.className = 'nav-button primary';
-            requestBtn.textContent = 'Yazılması için Talep Et';
-            requestBtn.onclick = () => requestGuide(query, requestBtn);
-            requestContainer.appendChild(requestBtn);
-
-            suggestionsList.appendChild(requestContainer);
+            document.getElementById('request-guide-btn').onclick = function () {
+                requestGuide(query, this);
+            };
+            document.getElementById('clear-search-btn').onclick = function () {
+                searchInput.value = '';
+                updateClearButton();
+                restoreGrid();
+            };
             return;
         }
 
-        suggestionTitle.textContent = '"' + query + '" için sonuçlar:';
-
         results.forEach(item => {
-            const link = document.createElement('a');
-            link.href = `/guide/${item.id}`;
-            link.className = 'suggestion-link';
-            link.textContent = item.title;
-            suggestionsList.appendChild(link);
+            const card = document.createElement('a');
+            card.href = `/guide/${item.id}`;
+            card.className = 'feature-card';
+
+            let imageHtml = '';
+            if (item.image_url) {
+                imageHtml = `
+            <div class="card-image-container">
+                <img src="${item.image_url}" alt="${item.title}" class="card-image">
+            </div>`;
+            } else {
+                imageHtml = `
+            <div class="card-image-container" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 2rem;">📄</span>
+            </div>`;
+            }
+
+            card.innerHTML = `
+                ${imageHtml}
+                <div class="card-content">
+                    <h3>${item.title}</h3>
+                </div>
+            `;
+            mainGrid.appendChild(card);
         });
 
-        // Trigger reading mode to add eye icons to new results
         if (window.YanindayimReadingMode && typeof window.YanindayimReadingMode.refresh === 'function') {
             window.YanindayimReadingMode.refresh();
         }
@@ -120,7 +151,7 @@
         clearTimeout(searchTimeout);
 
         if (query.length === 0) {
-            suggestionTitle.textContent = 'Bunu mu aramak istemiştiniz?';
+            restoreGrid();
             return;
         }
 
@@ -129,7 +160,6 @@
         }, 300);
     });
 
-    // --- Microphone / Speech-to-Text Logic ---
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();

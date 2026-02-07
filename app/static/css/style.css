@@ -361,13 +361,12 @@ body {
     color: var(--text-primary);
 }
 
-/* Dashboard Cards */
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 32px;
     max-width: 1100px;
-    margin: 40px auto;
+    margin: 20px auto;
     width: 100%;
 }
 
@@ -434,13 +433,34 @@ body {
     }
 }
 
-/* Hero Separator & Action */
+.no-results-card {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    cursor: default;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.no-results-card:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.no-results-card .card-content {
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    padding: 40px;
+}
+
 .hero-separator {
     width: 100%;
     max-width: 1000px;
-    /* Made long as requested */
     height: 1px;
-    /* Thinner for elegant long line */
     background: var(--border-color);
     margin: 40px auto;
 }
@@ -791,7 +811,50 @@ button.reading-text-target .reading-eye-button,
     }
 }
 
-/* Floating Stop Button */
+/* Suggestions Styles */
+.suggestions-container {
+    width: 100%;
+}
+
+.suggestions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.suggestion-link {
+    display: block;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.suggestion-link:hover {
+    border-color: var(--accent-color);
+    transform: translateX(4px);
+    background: #fafafa;
+}
+
+.suggestion-title {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    display: none;
+    /* Hidden by default until search */
+}
+
+.hero-search-input:focus {
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 4px rgba(94, 106, 210, 0.1) !important;
+}
+
+/* Floating Stop Button Position Fix */
 .reading-stop-floating {
     position: fixed;
     top: 100px;
@@ -1114,13 +1177,45 @@ button.reading-text-target .reading-eye-button,
     width: 100%;
     max-width: 800px;
     padding: 0 24px;
+    position: relative;
+    /* For absolute button positioning */
+}
+
+.progress-header {
+    margin-bottom: 24px;
+    position: relative;
 }
 
 .progress-container {
-    margin-bottom: 24px;
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    /* Removed margin-bottom as it is on header now */
+}
+
+.progress-home-btn {
+    position: absolute;
+    right: -240px;
+    top: 0;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    height: 36px;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 1150px) {
+    .progress-header {
+        margin-top: 40px;
+        /* Make space for the button above */
+    }
+
+    .progress-home-btn {
+        right: 0;
+        top: -44px;
+        /* Move above the progress bar */
+    }
 }
 
 .progress-track {

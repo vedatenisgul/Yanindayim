@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yanindayim-v1';
+const CACHE_NAME = 'yanindayim-v10';
 const ASSETS_TO_CACHE = [
     '/',
     '/static/css/style.css',
@@ -12,7 +12,6 @@ const ASSETS_TO_CACHE = [
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
-// Install Event - Cache Core Assets
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
@@ -23,7 +22,6 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
-// Activate Event - Clean old caches
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keyList) => {
@@ -40,19 +38,15 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch Event - Network First, then Cache, then Offline Page
 self.addEventListener('fetch', (event) => {
-    // Skip non-GET requests and external links (optional, but good practice)
     if (event.request.method !== 'GET') return;
 
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                // Create a clone of the response to save in cache
                 const responseClone = response.clone();
 
                 caches.open(CACHE_NAME).then((cache) => {
-                    // Only cache valid responses from our own origin or specific CDNs
                     if (event.request.url.startsWith('http')) {
                         cache.put(event.request, responseClone);
                     }
@@ -61,12 +55,10 @@ self.addEventListener('fetch', (event) => {
                 return response;
             })
             .catch(() => {
-                // Network failed, try cache
                 return caches.match(event.request).then((cachedResponse) => {
                     if (cachedResponse) {
                         return cachedResponse;
                     }
-                    // If navigation request (HTML page) and not in cache, show offline page
                     if (event.request.mode === 'navigate') {
                         return caches.match('/offline');
                     }

@@ -1,10 +1,49 @@
 {% extends "base.html" %}
 
+{% block title %}Ana Sayfa - Yanındayım{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/search.js" defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="hero-section">
     <h1 class="hero-title">Merhaba, ne yapmak istiyorsun?</h1>
 
-    <div class="card-grid">
+    <div class="search-container-hero" style="width: 100%; max-width: 800px; margin: 64px 0 8px 0;">
+        <div class="search-box-wrapper" style="position: relative;">
+            <input type="text" class="search-input hero-search-input"
+                placeholder="Örnek: MHRS'den randevu almak istiyorum"
+                style="width: 100%; padding: 22px 32px; font-size: 1.3rem; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;">
+
+            <div class="search-clear-icon" id="search-clear"
+                style="display: none; position: absolute; right: 70px; top: 50%; transform: translateY(-50%); cursor: pointer;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18" stroke="#5e5e5e" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M6 6L18 18" stroke="#5e5e5e" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </div>
+
+            <div class="search-mic-icon"
+                style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; padding: 8px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M12 14C13.66 14 15 12.66 15 11V5C15 3.34 13.66 2 12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14Z"
+                        stroke="#5e5e5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M19 10V11C19 14.87 15.87 18 12 18C8.13 18 5 14.87 5 11V10" stroke="#5e5e5e"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M12 18V22" stroke="#5e5e5e" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M8 22H16" stroke="#5e5e5e" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-grid" id="main-guides-grid">
         {% if guides %}
         {% for guide in guides %}
         <a href="/guide/{{ guide.id }}" class="feature-card">
@@ -24,9 +63,5 @@
         </div>
         {% endif %}
     </div>
-
-    <div class="hero-separator"></div>
-
-    <a href="/search" class="nav-button secondary large">Başka bir şey yapmak istiyorum</a>
 </div>
 {% endblock %}

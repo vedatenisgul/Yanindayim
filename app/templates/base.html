@@ -174,7 +174,6 @@
 
     <!-- PWA & Accessibility Scripts -->
     <script>
-        // 1. Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/static/sw.js')
@@ -183,7 +182,6 @@
             });
         }
 
-        // 2. Install Prompt Handler
         let deferredPrompt;
         const installBtn = document.getElementById('pwa-install-btn');
 
