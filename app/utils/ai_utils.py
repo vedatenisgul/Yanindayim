@@ -247,6 +247,53 @@ def get_calming_guidance(guide_title: str, step_title: str) -> str:
     import random
     return random.choice(responses)
 
+def generate_fraud_scenario() -> dict:
+    """
+    Generates a random fraud simulation scenario using Gemini.
+    Returns a dict with scenario, correct_action, explanation.
+    """
+    if not GOOGLE_API_KEY:
+        return {
+            "scenario": "Telefonda biri aradı, 'Ben savcıyım, adınız terör örgütüne karıştı, acil para göndermeniz lazım' dedi.",
+            "correct_action": "hangup",
+            "explanation": "Devlet görevlileri (savcı, polis) asla telefonda para istemez. Bu klasik bir dolandırıcılık yöntemidir."
+        }
+
+    try:
+        model = genai.GenerativeModel('gemini-flash-latest')
+        
+        prompt = """
+        Generate a short, realistic phone or internet fraud scenario targeting elderly people in Turkey.
+        Examples: Police/Prosecutor scam, Grandchild in trouble, winning a prize, bank account hacking.
+        
+        Output stricly JSON format:
+        {
+          "scenario": "The situational text (max 2 sentences, simple Turkish)",
+          "correct_action": "hangup" (if it's a scam) or "believe" (if it's safe - but mostly allow scams for education),
+          "explanation": "Why this is a scam (1 sentence simple Turkish)"
+        }
+        """
+        
+        response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
+        text_response = response.text.strip()
+        
+        # Clean markdown if present
+        if text_response.startswith("```json"):
+            text_response = text_response[7:-3]
+        elif text_response.startswith("```"):
+             text_response = text_response[3:-3]
+             
+        data = json.loads(text_response)
+        return data
+
+    except Exception as e:
+        logger.error(f"Gemini Fraud Gen Error: {e}")
+        return {
+            "scenario": "Bankadan aradığını söyleyen biri, 'Hesabınız çalındı, şifrenizi söyleyin' diyor.",
+            "correct_action": "hangup",
+            "explanation": "Bankalar asla telefonda şifrenizi istemez. Bu bir dolandırıcılıktır."
+        }
+
 def get_ai_help_response(user_query: str, guide_context: str = None, failed_attempts: list[str] = None, all_steps: list[dict] = None) -> str:
     """
     Generates a strict, calming response for specific user problems using Gemini API.

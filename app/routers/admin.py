@@ -313,3 +313,58 @@ async def clear_problems(request: Request, db: Session = Depends(get_db)):
     db.commit()
     
     return {"success": True}
+
+# --- Fraud Scenario Management ---
+
+from app.models import FraudScenario
+
+@router.get("/scenarios")
+async def admin_scenarios(request: Request, db: Session = Depends(get_db)):
+    user = request.session.get("user")
+    if not user or user.get("role") != "admin":
+        return RedirectResponse(url="/login", status_code=303)
+    
+    scenarios = db.query(FraudScenario).order_by(FraudScenario.id.desc()).all()
+    
+    return templates.TemplateResponse("admin_scenarios.html", {
+        "request": request,
+        "user": user,
+        "scenarios": scenarios
+    })
+
+@router.post("/scenarios/create")
+async def create_scenario(
+    request: Request,
+    scenario: str = Form(...),
+    correct_action: str = Form(...),
+    explanation: str = Form(...),
+    difficulty: int = Form(1),
+    db: Session = Depends(get_db)
+):
+    user = request.session.get("user")
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    new_scenario = FraudScenario(
+        scenario=scenario,
+        correct_action=correct_action,
+        explanation=explanation,
+        difficulty=difficulty
+    )
+    db.add(new_scenario)
+    db.commit()
+    
+    return RedirectResponse(url="/admin/scenarios", status_code=303)
+
+@router.post("/scenarios/{scenario_id}/delete")
+async def delete_scenario(scenario_id: int, request: Request, db: Session = Depends(get_db)):
+    user = request.session.get("user")
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    scenario = db.query(FraudScenario).filter(FraudScenario.id == scenario_id).first()
+    if scenario:
+        db.delete(scenario)
+        db.commit()
+    
+    return {"success": True}

@@ -49,7 +49,7 @@
 
   // Text targets that can get an inline “eye” button
   const TEXT_TARGET_SELECTOR =
-    "p, h1, h2, h3, h4, h5, h6, .nav-button, .reading-mode-toggle, .logout-link, .search-back-button, .search-input, .suggestion-title, .hero-title, .guide-content, .feature-card, .suggestion-link, .auth-title, .auth-subtitle, .form-group label, .takildim-button, .global-help-header h3, .global-help-subtitle, .help-option-card, .calm-card, .ai-guidance-box, #global-help-modal button, #global-help-modal input";
+    "p, h1, h2, h3, h4, h5, h6, .nav-button, .reading-mode-toggle, .logout-link, .search-back-button, .search-input, .suggestion-title, .hero-title, .guide-content, .feature-card, .suggestion-link, .auth-title, .auth-subtitle, .form-group label, .takildim-button, .global-help-header h3, .global-help-subtitle, .help-option-card, .calm-card, .ai-guidance-box, #global-help-modal button, #global-help-modal input, .safety-btn-hero, .safety-floating-btn, .safety-header h3, .scenario-text, .safety-action-btn, #result-title, #result-explanation, #btn-next-scenario";
   const MIN_TEXT_LENGTH = 4;
 
   function setPanelVisible(visible) {
@@ -320,8 +320,8 @@
   function handleUserInteraction(event) {
     if (!STATE.enabled) return;
 
-    // Don't read if clicking on reading mode controls
-    if (event.target.closest("[data-reading-panel], [data-reading-toggle], [data-reading-close]")) {
+    // Don't read if clicking on reading mode controls or close buttons
+    if (event.target.closest("[data-reading-panel], [data-reading-toggle], [data-reading-close], .close-modal-btn")) {
       return;
     }
 
@@ -335,7 +335,7 @@
         target = interactive;
       } else {
         // Otherwise, try to find readable text content (p, h1-h6, div with text, etc.)
-        const textElement = target.closest("p, h1, h2, h3, h4, h5, h6, .hero-title, .guide-content, .feature-card, .suggestion-link, [class*='content'], [class*='text']");
+        const textElement = target.closest("p, h1, h2, h3, h4, h5, h6, .hero-title, .guide-content, .feature-card, .suggestion-link, [class*='content'], [class*='text'], .scenario-text, .safety-header h3");
         if (textElement) {
           target = textElement;
         }

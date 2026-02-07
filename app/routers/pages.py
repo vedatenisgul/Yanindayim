@@ -3,7 +3,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Guide, Idea, StepProblem, User
-from app.utils.ai_utils import get_calming_guidance, get_ai_help_response
+from app.utils.ai_utils import get_calming_guidance, get_ai_help_response, generate_fraud_scenario
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -151,4 +151,22 @@ async def search_intent(request: Request, db: Session = Depends(get_db)):
 
     results = [{"id": g.id, "title": g.title, "type": "guide"} for g in guides]
     
-    return {"results": results}
+@router.get("/api/safety/scenario")
+async def safety_scenario(db: Session = Depends(get_db)):
+    # Try to get a random scenario from DB
+    import random
+    from app.models import FraudScenario
+    
+    count = db.query(FraudScenario).count()
+    if count > 0:
+        random_offset = random.randint(0, count - 1)
+        scenario = db.query(FraudScenario).offset(random_offset).first()
+        return {
+            "scenario": scenario.scenario,
+            "correct_action": scenario.correct_action,
+            "explanation": scenario.explanation
+        }
+    
+    # Fallback to AI if DB is empty
+    scenario_data = generate_fraud_scenario()
+    return scenario_data

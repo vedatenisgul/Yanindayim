@@ -1553,6 +1553,8 @@ button.reading-text-target .reading-eye-button,
     /* High z-index to stay on top */
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     font-family: var(--font-family);
+    font-size: 1rem;
+    font-weight: 600;
 }
 
 .takildim-button:hover {
@@ -1932,4 +1934,185 @@ button.reading-text-target .reading-eye-button,
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Safety Simulation Styles */
+.safety-floating-btn {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    /* Position on left to balance Help button on right */
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 1000;
+    font-family: var(--font-family);
+}
+
+.safety-floating-btn:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.6);
+}
+
+.safety-floating-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.safety-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.safety-card {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: scaleUp 0.3s ease-out;
+}
+
+.safety-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.safety-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: #eff6ff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.safety-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.safety-body {
+    text-align: center;
+}
+
+.safety-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: #6b7280;
+}
+
+.scenario-text {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: #1f2937;
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 32px;
+    text-align: left;
+}
+
+.safety-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+@media (min-width: 640px) {
+    .safety-actions {
+        flex-direction: row;
+    }
+}
+
+.safety-action-btn {
+    flex: 1;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.safety-action-btn:hover {
+    transform: translateY(-2px);
+}
+
+.safety-action-btn.danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.safety-action-btn.danger:hover {
+    background: #fecaca;
+}
+
+.safety-action-btn.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.safety-action-btn.success:hover {
+    background: #bbf7d0;
+}
+
+.btn-icon {
+    font-size: 1.25rem;
+}
+
+/* Result Styles */
+.result-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+}
+
+#result-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+#result-explanation {
+    color: #4b5563;
+    margin-bottom: 24px;
+    line-height: 1.5;
 }

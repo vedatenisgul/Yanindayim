@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}Dolandırıcılık Senaryoları - Yanındayım Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="admin-header" style="display: flex; align-items: center; margin-bottom: 24px;">
+            <a href="/admin" class="nav-button secondary" style="margin-right: 16px;">&larr; Geri</a>
+            <h1 class="admin-title" style="margin-bottom: 0;">Dolandırıcılık Senaryoları</h1>
+        </div>
+
+        <p class="admin-subtitle">"Güvende Miyim?" özelliği için senaryoları yönetin.</p>
+
+        <!-- Add New Scenario Section -->
+        <div class="admin-section">
+            <h2 class="section-title">Yeni Senaryo Ekle</h2>
+            <form action="/admin/scenarios/create" method="post" class="scenario-form">
+                <div class="form-group">
+                    <label for="scenario">Senaryo Metni (Kullanıcıya gösterilecek durum)</label>
+                    <textarea name="scenario" id="scenario" class="search-input" rows="3" required
+                        placeholder="Örn: Telefonda kendini savcı olarak tanıtan biri..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="correct_action">Doğru Davranış</label>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                        <label
+                            style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; background: #f0fdf4; padding: 10px 16px; border-radius: 8px; border: 1px solid #bbf7d0; transition: all 0.2s;">
+                            <input type="radio" name="correct_action" value="hangup" required checked
+                                style="margin: 0; width: 18px; height: 18px; cursor: pointer;">
+                            <span style="font-weight: 600; color: #166534; font-size: 0.95rem;">Telefonu Kapat /
+                                İnanma</span>
+                        </label>
+                        <label
+                            style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; background: #fef2f2; padding: 10px 16px; border-radius: 8px; border: 1px solid #fecaca; transition: all 0.2s;">
+                            <input type="radio" name="correct_action" value="believe"
+                                style="margin: 0; width: 18px; height: 18px; cursor: pointer;">
+                            <span style="font-weight: 600; color: #991b1b; font-size: 0.95rem;">İnan (Güvenli Durumlar
+                                İçin)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="explanation">Açıklama (Sonuç ekranında gösterilecek bilgi)</label>
+                    <textarea name="explanation" id="explanation" class="search-input" rows="3" required
+                        placeholder="Örn: Devlet görevlileri asla para istemez..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="difficulty">Zorluk Seviyesi (1: Kolay, 3: Zor)</label>
+                    <input type="number" name="difficulty" id="difficulty" class="search-input" value="1" min="1"
+                        max="3" required style="width: 100px;">
+                </div>
+
+                <button type="submit" class="nav-button primary"
+                    style="width: 100%; justify-content: center; padding: 14px; font-size: 1rem;">Senaryoyu
+                    Kaydet</button>
+            </form>
+        </div>
+
+        <!-- Existing Scenarios List -->
+        <div class="admin-section">
+            <h2 class="section-title">Mevcut Senaryolar ({{ scenarios|length }})</h2>
+            {% if scenarios %}
+            <div class="guides-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">ID</th>
+                            <th>Senaryo</th>
+                            <th>Doğru Cevap</th>
+                            <th>Açıklama</th>
+                            <th style="width: 80px;">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scenario in scenarios %}
+                        <tr>
+                            <td>{{ scenario.id }}</td>
+                            <td>
+                                <div style="max-height: 80px; overflow-y: auto;">{{ scenario.scenario }}</div>
+                            </td>
+                            <td>
+                                {% if scenario.correct_action == 'hangup' %}
+                                <span class="status-badge"
+                                    style="background: #dcfce7; color: #166534;">Kapat/İnanma</span>
+                                {% else %}
+                                <span class="status-badge" style="background: #fee2e2; color: #991b1b;">İnan</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div
+                                    style="max-height: 80px; overflow-y: auto; color: var(--text-secondary); font-size: 0.9em;">
+                                    {{ scenario.explanation }}</div>
+                            </td>
+                            <td class="actions-cell">
+                                <button type="button" class="action-btn delete"
+                                    onclick="deleteRow(this, '/admin/scenarios/{{ scenario.id }}/delete', 'Bu senaryoyu silmek istediğinize emin misiniz?', 'Senaryo')">Sil</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="empty-state">Henüz kayıtlı senaryo bulunmuyor.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Reuse styles and scripts from admin dashboard via base.html and inline blocks if needed -->
+<!-- Utilizing the scripts defined in admin_dashboard.html would require moving them to a shared js file or block. 
+     For now, I'll essentially replicate the necessary delete logic or rely on a shared block if I refactor.
+     However, looking at admin_dashboard.html, the script is inside the templates.
+     I should copy the script block or better, link the logic. 
+     To keep it simple and robust, I'll include the necessary script here.
+-->
+
+<!-- Toast Notification Container (if not in base) -->
+<div id="toast-container" class="toast-container"></div>
+
+<style>
+    /* Reuse Admin Styles from Dashboard (Basic) */
+    .admin-page {
+        min-height: 100vh;
+        padding-top: 120px;
+        padding-bottom: 60px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .admin-container {
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .admin-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .admin-subtitle {
+        margin-bottom: 32px;
+        color: var(--text-secondary);
+    }
+
+    .admin-section {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-family: inherit;
+    }
+
+    /* Table Styles */
+    .guides-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .guides-table th,
+    .guides-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: top;
+    }
+
+    .guides-table th {
+        background: #f9fafb;
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .action-btn.delete {
+        background: #fee2e2;
+        color: #ef4444;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 13px;
+    }
+
+    .action-btn.delete:hover {
+        background: #fecaca;
+    }
+
+    /* Toast Styles */
+    .toast-container {
+        position: fixed;
+        bottom: 32px;
+        right: 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 9999;
+    }
+
+    .toast {
+        background: #1d1d1f;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.4s;
+    }
+
+    .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .toast.success {
+        border-left: 4px solid #34C759;
+    }
+
+    .toast.error {
+        border-left: 4px solid #FF3B30;
+    }
+</style>
+
+<script>
+    // Simple Toast & Delete Logic
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<div>${type === 'success' ? '✓' : '✕'}</div><div>${message}</div>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    async function deleteRow(btn, url, confirmMsg) {
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const response = await fetch(url, { method: 'POST' });
+            const result = await response.json();
+
+            if (result.success) {
+                const row = btn.closest('tr');
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 300);
+                showToast('Kayıt silindi', 'success');
+            } else {
+                showToast('Hata oluştu', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showToast('Bağlantı hatası', 'error');
+        }
+    }
+</script>
+{% endblock %}

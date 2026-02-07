@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yanindayim-v10';
+const CACHE_NAME = 'yanindayim-v11';
 const ASSETS_TO_CACHE = [
     '/',
     '/static/css/style.css',

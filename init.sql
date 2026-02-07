@@ -126,3 +126,26 @@ INSERT INTO guide_steps (guide_id, step_number, title, description, image_url) V
 SELECT setval('guides_id_seq', (SELECT MAX(id) FROM guides));
 SELECT setval('guide_steps_id_seq', (SELECT MAX(id) FROM guide_steps));
 SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
+
+-- Fraud Scenarios
+CREATE TABLE IF NOT EXISTS fraud_scenarios (
+    id SERIAL PRIMARY KEY,
+    scenario TEXT NOT NULL,
+    correct_action VARCHAR(50) NOT NULL,
+    explanation TEXT NOT NULL,
+    difficulty INTEGER DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO fraud_scenarios (scenario, correct_action, explanation, difficulty) VALUES
+('Telefonda kendini polis veya savcı olarak tanıtan biri aradı. ''Adınız bir terör örgütü soruşturmasına karıştı, bankadaki paranızı güvence altına almamız lazım, size vereceğimiz hesap numarasına paranızı gönderin'' diyor.', 'hangup', 'Devlet görevlileri (Polis, Savcı, Jandarma) asla vatandaştan para istemez veya hesap numarası vermez. Bu en yaygın dolandırıcılık yöntemidir. Telefonu hemen kapatın ve 155''i arayın.', 1),
+('Bankadan aradığını söyleyen bir kişi, ''Hesabınızdan şüpheli bir işlem yapıldı, iptal etmek için telefonunuza gelen şifreyi bize söyleyin'' diyor.', 'hangup', 'Bankalar asla telefonda şifrenizi veya onay kodunuzu istemez. Bu şifreler sadece sizin kullanımınız içindir. Kimseyle paylaşmayın.', 1),
+('Telefonunuza bir mesaj geldi: ''Tebrikler! Son model bir telefon kazandınız. Ödülünüzü almak için sadece kargo ücretini ödemeniz gerekiyor, şu linke tıklayın.''', 'hangup', 'Bedava peynir sadece fare kapanında olur. Tanımadığınız numaralardan gelen ödül mesajları ve linkler genellikle virüslüdür veya kredi kartı bilgilerinizi çalmak içindir.', 1),
+('Telefonda ağlayan bir ses: ''Dede (veya Babaanne), ben torunun. Kaza yaptım, çok acil paraya ihtiyacım var ama ailem duymasın. Arkadaşımın hesabına para gönderir misin?''', 'hangup', 'Dolandırıcılar ağlama sesi taklidi yaparak veya gürültülü bir ortamdaymış gibi davranarak sizi paniğe sürükler. Önce torununuzu veya ailesini kendi bildiğiniz numaradan arayıp teyit edin.', 2),
+('Bir avukatlık bürosundan aradıklarını söylüyorlar: ''Geçmişe dönük ödenmemiş sağlık sigortası borcunuz var. Bugün ödemezseniz haciz işlemi başlatılacak.''', 'hangup', 'Sizi korkutarak ve aceleye getirerek düşünmenizi engellemeye çalışıyorlar. Resmi borçlar e-Devlet üzerinden kontrol edilebilir. Telefonda ödeme yapmayın.', 2),
+('Kullandığınız bankanın logosunu taşıyan bir e-posta geldi: ''Kredi kartı aidatlarınızı iade ediyoruz. İade için aşağıdaki butona tıklayıp kart bilgilerinizi girin.''', 'hangup', 'Bankalar aidat iadesi için kart bilgilerini istemezler. Gelen e-posta sahte bir siteye yönlendiriyor olabilir. Bankanızı arayarak teyit edin.', 2),
+('Marketten çıktınız, yanınıza iyi giyimli biri geldi. ''Emekliler için hediye çeki dağıtıyoruz ama telefonunuzdan bir onay vermeniz gerekiyor'' diyerek telefonunuzu istiyor.', 'hangup', 'Tanımadığınız kişilere telefonunuzu vermeyin. Sizin adınıza kredi başvurusu yapabilir veya mobil ödeme işlemi gerçekleştirebilirler.', 1),
+('Sosyal medyada ''Devletten 5000 TL yardım parası! Başvuru için tıklayın'' şeklinde bir ilan gördünüz. Linke tıkladığınızda TC kimlik ve banka bilgilerinizi istiyor.', 'hangup', 'Devlet yardımları sadece e-Devlet veya resmi kurumlar üzerinden yapılır. Sosyal medya reklamlarına itibar etmeyin.', 1),
+('İnternet sağlayıcınızdan aradıklarını söylüyorlar: ''İnternet faturanızda hata olmuş, size 200 TL iade yapacağız. İşlem için kart numaranızı kodlayın.''', 'hangup', 'Kurumlar iade yapacaksa bunu faturadan düşerler veya IBAN isterler. Asla kart numarası ve şifre istemezler.', 2),
+('Jandarmadan aradığını söyleyen biri, kimliğinizin bir kuyumcu soygununda bulunduğunu, parmak izi kontrolü için evdeki altınlarınızı bir poşete koyup kapıdaki görevliye vermeniz gerektiğini söylüyor.', 'hangup', 'Jandarma veya polis asla evinize gelip altın veya para istemez. Bu, suçluluk psikolojisi ve korku yaratarak yapılan bir dolandırıcılıktır.', 1);
+

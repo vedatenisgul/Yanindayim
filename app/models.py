@@ -57,3 +57,13 @@ class Idea(Base):
     title = Column(String, index=True)
     count = Column(Integer, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class FraudScenario(Base):
+    __tablename__ = "fraud_scenarios"
+
+    id = Column(Integer, primary_key=True, index=True)
+    scenario = Column(Text, nullable=False)
+    correct_action = Column(String, nullable=False) # 'hangup' or 'believe'
+    explanation = Column(Text, nullable=False)
+    difficulty = Column(Integer, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
