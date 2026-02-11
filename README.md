@@ -1,5 +1,7 @@
 # Yanındayım
 
+![Yanındayım Logo](app/static/img/logo.png)
+
 **Yanındayım** (I am by your side) is an elderly-friendly Turkish web application that helps senior citizens navigate the digital world with confidence. It provides simplified, step-by-step guides for essential tasks like e-Devlet access, medical appointments (MHRS), and everyday digital activities.
 
 Built with accessibility and trust at its core, the app features AI-powered assistance, voice navigation, fraud awareness training, and a companion mode that notifies trusted contacts when users are struggling.
