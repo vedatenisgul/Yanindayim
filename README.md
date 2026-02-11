@@ -1,29 +1,74 @@
-# Yanındayım 🤝
+# Yanındayım
 
-**Yanındayım** (I am by your side) is a modern, elderly-friendly Turkish web application designed to help senior citizens navigate the digital world with confidence. It provides simplified, step-by-step guides for essential tasks like e-Devlet access, medical appointments (MHRS), and everyday digital activities.
+**Yanındayım** (I am by your side) is an elderly-friendly Turkish web application that helps senior citizens navigate the digital world with confidence. It provides simplified, step-by-step guides for essential tasks like e-Devlet access, medical appointments (MHRS), and everyday digital activities.
 
-![Yanındayım Hero](/app/static/img/logo.png)
+Built with accessibility and trust at its core, the app features AI-powered assistance, voice navigation, fraud awareness training, and a companion mode that notifies trusted contacts when users are struggling.
 
-## ✨ Features
+---
 
-- **Elderly-Friendly UI**: Minimalist design with high contrast, large typography, and simple navigation (inspired by Linear and Apple).
-- **AI-Powered Guides**: Dynamically generates step-by-step instructions in simple Turkish using Google Gemini.
-- **Visual Illustrations**: Automated icon and image generation via Hugging Face to make steps easier to follow.
-- **Calming Assistance**: Integrated AI support to provide reassuring and simplified technical help when users get stuck.
-- **Admin Dashboard**: Tools for administrators to manage, test, and refine guides.
-- **Secure Authentication**: Simple registration and login system.
+## Screenshots
 
-## 🛠 Tech Stack
+### Home Page
+The landing page showcases available guides with visual cards and a search bar for quick access.
 
-- **Backend**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.9+)
-- **Database**: [PostgreSQL](https://www.postgresql.org/) with [SQLAlchemy ORM](https://www.sqlalchemy.org/)
-- **Frontend**: Jinja2 Templates, Vanilla CSS, Responsive Layout
-- **AI Integrations**:
-  - [Google Gemini API](https://ai.google.dev/) (Content Generation)
-  - [Hugging Face Inference](https://huggingface.co/inference-endpoints) (Image Generation)
-- **Containerization**: [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
+![Home Page](docs/screenshots/home.png)
 
-## 🚀 Getting Started
+### Guide Steps
+Interactive step-by-step guides with progress tracking, visual instructions, and AI-powered help when users get stuck.
+
+![Guide Page](docs/screenshots/guide.png)
+
+### User Profile & Companion Mode
+Personal dashboard with progress stats, trusted contacts management (Refakatçi Modu), and guide history.
+
+![Profile Page](docs/screenshots/profile.png)
+
+### Companion Notification
+When a user struggles (3+ help requests), the system offers to notify their trusted contacts.
+
+![Companion Mode](docs/screenshots/companion.png)
+
+---
+
+## Features
+
+### Core
+- **Elderly-Friendly UI** — Minimalist Apple/Linear-inspired design with large typography, high contrast, and simple navigation
+- **Step-by-Step Guides** — Interactive walkthroughs with progress bars, visual illustrations, and resume functionality
+- **AI-Powered Help** — Google Gemini provides calming, simplified technical assistance when users get stuck
+- **Voice Navigation** — Hands-free control with Turkish voice commands (İleri, Geri, Sorun Var)
+
+### User Progress
+- **Server-Side Progress Tracking** — Saves guide progress to the server for logged-in users
+- **Resume from Last Step** — Users can pick up exactly where they left off
+- **Profile Dashboard** — Stats on completed guides, in-progress guides, and weekly streak
+
+### Companion Mode (Refakatçi Modu)
+- **Trusted Contacts** — Users can add up to 3 trusted people (children, neighbors, friends)
+- **Frustration Detection** — System detects when users are struggling (3+ problem reports)
+- **Notification System** — Offers to notify trusted contacts with guide/step context
+
+### Safety & Accessibility
+- **Fraud Awareness Training** — Interactive scenarios teaching users to recognize scams
+- **Reading Mode** — Simplified text display for better readability
+- **PWA Support** — Installable as a mobile app with offline capabilities
+- **Admin Dashboard** — Tools for managing and testing guides
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | [FastAPI](https://fastapi.tiangolo.com/) (Python 3.9+) |
+| **Database** | [PostgreSQL](https://www.postgresql.org/) + [SQLAlchemy ORM](https://www.sqlalchemy.org/) |
+| **Frontend** | Jinja2 Templates, Vanilla CSS, JavaScript |
+| **AI** | [Google Gemini API](https://ai.google.dev/), [Hugging Face Inference](https://huggingface.co/inference-endpoints) |
+| **Containerization** | [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/) |
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
@@ -31,63 +76,70 @@
 - Google Gemini API Key
 - Hugging Face API Token (optional, for image generation)
 
-### Setup with Docker (Recommended)
-
-1. **Clone the repository**:
-
-   ```bash
-   git clone <repository-url>
-   cd Yanındayım
-   ```
-
-2. **Configure Environment Variables**:
-   Copy the example environment file and fill in your keys:
-
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your GOOGLE_API_KEY, etc.
-   ```
-
-3. **Start the application**:
-
-   ```bash
-   docker-compose up --build
-   ```
-
-4. **Access the app**:
-   Open [http://localhost:8000](http://localhost:8000) in your browser.
-
-## 📂 Project Structure
+### Setup
 
 ```bash
-.
-├── app/
-│   ├── main.py          # Application entry point
-│   ├── database.py      # SQLAlchemy connection setup
-│   ├── models.py        # Database models
-│   ├── routers/         # API & Page routes (admin, auth, pages)
-│   ├── static/          # CSS, JS, and generated images
-│   ├── templates/       # Jinja2 HTML templates
-│   └── utils/           # AI helpers and utility functions
-├── docker-compose.yml   # Multi-container orchestration
-├── Dockerfile           # Web service container definition
-├── init.sql             # DB schema and initial seed data
-└── .env.example         # Environment variable template
+# 1. Clone the repository
+git clone <repository-url>
+cd Yanındayım
+
+# 2. Configure environment variables
+cp .env.example .env
+# Edit .env and add your API keys
+
+# 3. Start the application
+docker compose up --build
+
+# 4. Open in browser
+open http://localhost:8000
 ```
 
-## 🔑 Environment Variables
+---
 
-The following variables are required in your `.env` file:
+## Project Structure
 
-| Variable              | Description                             |
-| :-------------------- | :-------------------------------------- |
-| `DATABASE_URL`        | PostgreSQL connection string            |
-| `GOOGLE_API_KEY`      | Your Google Gemini API Key              |
-| `HUGGINGFACE_API_KEY` | Hugging Face Token for image generation |
-| `SESSION_SECRET_KEY`  | Secret key for session encryption       |
-| `POSTGRES_USER`       | DB User (if using Docker)               |
-| `POSTGRES_PASSWORD`   | DB Password (if using Docker)           |
+```
+.
+├── app/
+│   ├── main.py              # Application entry point
+│   ├── database.py          # SQLAlchemy connection setup
+│   ├── models.py            # Database models (User, Guide, TrustedContact, etc.)
+│   ├── routers/
+│   │   ├── admin.py         # Admin dashboard routes
+│   │   ├── auth.py          # Authentication (login, register, logout)
+│   │   └── pages.py         # Public pages, APIs, companion mode
+│   ├── static/
+│   │   ├── css/style.css    # Complete design system
+│   │   ├── js/              # Guide steps, voice nav, safety, reading mode
+│   │   ├── img/             # Static images and generated icons
+│   │   ├── sw.js            # Service worker for PWA
+│   │   └── manifest.json    # PWA manifest
+│   ├── templates/           # Jinja2 HTML templates
+│   └── utils/
+│       ├── ai_utils.py      # Gemini & HuggingFace integration
+│       └── companion.py     # Companion mode notification formatter
+├── docker-compose.yml       # Multi-container orchestration
+├── Dockerfile               # Web service container
+├── init.sql                 # DB schema + seed data
+├── requirements.txt         # Python dependencies
+└── .env.example             # Environment variable template
+```
 
-## 📄 License
+---
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `GOOGLE_API_KEY` | Google Gemini API key |
+| `HUGGINGFACE_API_KEY` | Hugging Face token (image generation) |
+| `SESSION_SECRET_KEY` | Secret key for session encryption |
+| `POSTGRES_USER` | Database username (Docker) |
+| `POSTGRES_PASSWORD` | Database password (Docker) |
+
+---
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
