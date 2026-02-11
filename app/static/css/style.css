@@ -2116,6 +2116,7 @@ button.reading-text-target .reading-eye-button,
     margin-bottom: 24px;
     line-height: 1.5;
 }
+
 /* Voice Navigation Toggle */
 .voice-nav-toggle {
     position: fixed;
@@ -2129,7 +2130,7 @@ button.reading-text-target .reading-eye-button,
     display: flex;
     align-items: center;
     gap: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     z-index: 999;
     transition: all 0.3s ease;
@@ -2139,7 +2140,7 @@ button.reading-text-target .reading-eye-button,
 
 .voice-nav-toggle:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .voice-nav-toggle.listening {
@@ -2155,9 +2156,17 @@ button.reading-text-target .reading-eye-button,
 }
 
 @keyframes pulse-red {
-    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
 }
 
 @media (max-width: 768px) {
@@ -2166,7 +2175,288 @@ button.reading-text-target .reading-eye-button,
         right: 20px;
         padding: 10px;
     }
+
     .voice-nav-toggle .voice-status-text {
         display: none;
+    }
+}
+
+/* ===== Profile / Progress Dashboard ===== */
+.profile-page {
+    min-height: 100vh;
+    padding-top: 120px;
+    padding-bottom: 60px;
+    display: flex;
+    justify-content: center;
+    background: var(--bg-color);
+}
+
+.profile-container {
+    width: 100%;
+    max-width: 900px;
+    padding: 0 24px;
+}
+
+/* Greeting */
+.profile-greeting {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.profile-avatar-large {
+    width: 64px;
+    height: 64px;
+    background: var(--text-primary);
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.profile-greeting-text h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+}
+
+.profile-streak {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.profile-streak strong {
+    color: var(--accent-color);
+}
+
+/* Stats Cards */
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* Sections */
+.profile-section {
+    margin-bottom: 40px;
+}
+
+.profile-section-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-icon {
+    font-size: 1.3rem;
+}
+
+/* Progress Cards Grid */
+.progress-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.progress-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.progress-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    border-color: var(--accent-color);
+}
+
+.progress-card-image {
+    width: 100%;
+    height: 140px;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.progress-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.progress-card:hover .progress-card-image img {
+    transform: scale(1.05);
+}
+
+.progress-card-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+}
+
+.progress-card-body h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.3;
+}
+
+/* Mini Progress Bar inside card */
+.progress-card-bar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.progress-card-bar {
+    width: 100%;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-card-fill {
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.progress-card-text {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.progress-card-resume {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-top: auto;
+}
+
+/* Completed Card */
+.completed-card {
+    border-color: #d1fae5;
+}
+
+.completed-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: #d1fae5;
+    color: #059669;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.completed-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Explore Card */
+.explore-card {
+    border-style: dashed;
+}
+
+/* Empty State */
+.profile-empty {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.profile-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.profile-empty h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.profile-empty p {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .profile-greeting {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profile-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .stat-card {
+        padding: 14px 8px;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+    }
+
+    .progress-cards-grid {
+        grid-template-columns: 1fr;
     }
 }

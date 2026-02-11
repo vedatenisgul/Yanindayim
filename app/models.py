@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -11,6 +11,8 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     role = Column(String, default="user")  # 'user' or 'admin'
+
+    progress = relationship("UserGuideProgress", back_populates="user", cascade="all, delete-orphan")
 
 class Guide(Base):
     __tablename__ = "guides"
@@ -67,3 +69,19 @@ class FraudScenario(Base):
     explanation = Column(Text, nullable=False)
     difficulty = Column(Integer, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class UserGuideProgress(Base):
+    __tablename__ = "user_guide_progress"
+    __table_args__ = (UniqueConstraint('user_id', 'guide_id', name='uq_user_guide'),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    guide_id = Column(Integer, ForeignKey("guides.id"), nullable=False)
+    current_step = Column(Integer, default=1)
+    total_steps = Column(Integer, default=1)
+    completed = Column(Boolean, default=False)
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    user = relationship("User", back_populates="progress")
+    guide = relationship("Guide")

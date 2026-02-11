@@ -6,6 +6,9 @@
 <script>
     document.documentElement.dataset.guideId = "{{ guide.id }}";
     document.documentElement.dataset.helpOptions = '{{ guide.help_options | safe if guide.help_options else "" }}';
+    {% if user %}
+    window.currentUser = { id: {{ user.id }}, name: "{{ user.name }}" };
+    {% endif %}
 </script>
 <div class="guide-page">
     <div class="guide-container">

@@ -47,8 +47,10 @@
                         </span>
                         <span class="reading-mode-label">Okuma Modu</span>
                     </button>
-                    <div class="user-avatar text-center">{{ user.name[0] }}</div>
-                    <span class="user-profile-name">{{ user.name }}</span>
+                    <a href="/profile" class="user-profile-badge" style="text-decoration:none;">
+                        <div class="user-avatar text-center">{{ user.name[0] }}</div>
+                        <span class="user-profile-name">{{ user.name }}</span>
+                    </a>
                     <a href="/logout" class="logout-link">Çıkış Yap</a>
                 </div>
                 {% else %}

@@ -1,8 +1,10 @@
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import Guide, Idea, StepProblem, User
+from app.models import Guide, Idea, StepProblem, User, UserGuideProgress
 from app.utils.ai_utils import get_calming_guidance, get_ai_help_response, generate_fraud_scenario
 
 router = APIRouter()
@@ -38,6 +40,137 @@ async def guide_page(request: Request, guide_id: int, db: Session = Depends(get_
         "title": guide.title,
         "user": request.session.get("user")
     })
+
+@router.get("/profile")
+async def profile_page(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        return RedirectResponse(url="/login", status_code=303)
+    
+    user_id = user_session.get("id")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+
+    # Get all progress records for this user
+    all_progress = db.query(UserGuideProgress).filter(
+        UserGuideProgress.user_id == user_id
+    ).all()
+
+    completed_progress = [p for p in all_progress if p.completed]
+    in_progress = [p for p in all_progress if not p.completed]
+
+    # Get guides user hasn't started
+    started_guide_ids = [p.guide_id for p in all_progress]
+    available_query = db.query(Guide).filter(Guide.status == "published")
+    if started_guide_ids:
+        available_query = available_query.filter(~Guide.id.in_(started_guide_ids))
+    available_guides = available_query.order_by(Guide.priority.desc()).all()
+
+    # Calculate weekly streak (guides completed in the last 7 days)
+    week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    weekly_count = sum(
+        1 for p in completed_progress
+        if p.completed_at and p.completed_at >= week_ago
+    )
+
+    return templates.TemplateResponse("profile.html", {
+        "request": request,
+        "user": user,
+        "completed": completed_progress,
+        "in_progress": in_progress,
+        "available_guides": available_guides,
+        "weekly_count": weekly_count,
+        "total_completed": len(completed_progress),
+    })
+
+@router.post("/api/progress/save")
+async def save_progress(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        return {"success": False, "error": "Not logged in"}
+    
+    data = await request.json()
+    guide_id = data.get("guide_id")
+    current_step = data.get("current_step", 1)
+    total_steps = data.get("total_steps", 1)
+
+    if not guide_id:
+        return {"success": False, "error": "guide_id required"}
+
+    user_id = user_session.get("id")
+    progress = db.query(UserGuideProgress).filter(
+        UserGuideProgress.user_id == user_id,
+        UserGuideProgress.guide_id == guide_id
+    ).first()
+
+    if progress:
+        progress.current_step = current_step
+        progress.total_steps = total_steps
+    else:
+        progress = UserGuideProgress(
+            user_id=user_id,
+            guide_id=guide_id,
+            current_step=current_step,
+            total_steps=total_steps
+        )
+        db.add(progress)
+
+    db.commit()
+    return {"success": True}
+
+@router.post("/api/progress/complete")
+async def complete_progress(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        return {"success": False, "error": "Not logged in"}
+    
+    data = await request.json()
+    guide_id = data.get("guide_id")
+    if not guide_id:
+        return {"success": False, "error": "guide_id required"}
+
+    user_id = user_session.get("id")
+    progress = db.query(UserGuideProgress).filter(
+        UserGuideProgress.user_id == user_id,
+        UserGuideProgress.guide_id == guide_id
+    ).first()
+
+    if progress:
+        progress.completed = True
+        progress.completed_at = datetime.now(timezone.utc)
+    else:
+        progress = UserGuideProgress(
+            user_id=user_id,
+            guide_id=guide_id,
+            completed=True,
+            completed_at=datetime.now(timezone.utc)
+        )
+        db.add(progress)
+
+    db.commit()
+    return {"success": True}
+
+@router.get("/api/progress/{guide_id}")
+async def get_progress(request: Request, guide_id: int, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        return {"success": False, "logged_in": False}
+    
+    user_id = user_session.get("id")
+    progress = db.query(UserGuideProgress).filter(
+        UserGuideProgress.user_id == user_id,
+        UserGuideProgress.guide_id == guide_id
+    ).first()
+
+    if progress:
+        return {
+            "success": True,
+            "current_step": progress.current_step,
+            "total_steps": progress.total_steps,
+            "completed": progress.completed
+        }
+    return {"success": True, "current_step": None}
 
 @router.get("/search")
 async def search_page(request: Request, db: Session = Depends(get_db)):

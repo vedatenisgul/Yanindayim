@@ -137,6 +137,19 @@ CREATE TABLE IF NOT EXISTS fraud_scenarios (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- User Guide Progress
+CREATE TABLE IF NOT EXISTS user_guide_progress (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    guide_id INTEGER REFERENCES guides(id) ON DELETE CASCADE,
+    current_step INTEGER DEFAULT 1,
+    total_steps INTEGER DEFAULT 1,
+    completed BOOLEAN DEFAULT FALSE,
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    UNIQUE(user_id, guide_id)
+);
+
 INSERT INTO fraud_scenarios (scenario, correct_action, explanation, difficulty) VALUES
 ('Telefonda kendini polis veya savcı olarak tanıtan biri aradı. ''Adınız bir terör örgütü soruşturmasına karıştı, bankadaki paranızı güvence altına almamız lazım, size vereceğimiz hesap numarasına paranızı gönderin'' diyor.', 'hangup', 'Devlet görevlileri (Polis, Savcı, Jandarma) asla vatandaştan para istemez veya hesap numarası vermez. Bu en yaygın dolandırıcılık yöntemidir. Telefonu hemen kapatın ve 155''i arayın.', 1),
 ('Bankadan aradığını söyleyen bir kişi, ''Hesabınızdan şüpheli bir işlem yapıldı, iptal etmek için telefonunuza gelen şifreyi bize söyleyin'' diyor.', 'hangup', 'Bankalar asla telefonda şifrenizi veya onay kodunuzu istemez. Bu şifreler sadece sizin kullanımınız içindir. Kimseyle paylaşmayın.', 1),

@@ -21,10 +21,30 @@ function getGuideId() {
     return guideId;
 }
 
+function getTotalSteps() {
+    return document.querySelectorAll('.step-card').length;
+}
+
+// --- Progress Persistence ---
+
 function saveProgress(stepNum) {
     const guideId = getGuideId();
-    if (guideId) {
-        localStorage.setItem(`guide_progress_${guideId}`, stepNum);
+    if (!guideId) return;
+
+    // Always save to localStorage as fallback
+    localStorage.setItem(`guide_progress_${guideId}`, stepNum);
+
+    // Sync to server if logged in
+    if (window.currentUser) {
+        fetch('/api/progress/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                guide_id: parseInt(guideId),
+                current_step: stepNum,
+                total_steps: getTotalSteps()
+            })
+        }).catch(err => console.log('Progress sync error:', err));
     }
 }
 
@@ -35,12 +55,34 @@ function clearProgress() {
     }
 }
 
-function checkResume() {
+async function checkResume() {
     const guideId = getGuideId();
     if (!guideId) return;
 
-    const savedStep = localStorage.getItem(`guide_progress_${guideId}`);
-    if (savedStep && parseInt(savedStep) > 1) {
+    let savedStep = null;
+
+    // Try server-side progress first for logged-in users
+    if (window.currentUser) {
+        try {
+            const res = await fetch(`/api/progress/${guideId}`);
+            const data = await res.json();
+            if (data.success && data.current_step && data.current_step > 1 && !data.completed) {
+                savedStep = data.current_step;
+            }
+        } catch (err) {
+            console.log('Server progress fetch failed, falling back to localStorage');
+        }
+    }
+
+    // Fallback to localStorage
+    if (!savedStep) {
+        const localStep = localStorage.getItem(`guide_progress_${guideId}`);
+        if (localStep && parseInt(localStep) > 1) {
+            savedStep = parseInt(localStep);
+        }
+    }
+
+    if (savedStep) {
         // Show resume modal
         const modal = document.getElementById('resume-modal');
         const stepNumSpan = document.getElementById('resume-step-num');
@@ -48,7 +90,6 @@ function checkResume() {
         if (modal && stepNumSpan) {
             stepNumSpan.textContent = savedStep;
             modal.style.display = 'flex';
-            // Store for resume action
             modal.dataset.savedStep = savedStep;
         }
     }
@@ -71,6 +112,8 @@ function restartGuide() {
         showStep(1);
     }
 }
+
+// --- Step Navigation ---
 
 function updateProgress() {
     const activeCard = document.querySelector('.step-card.active');
@@ -130,8 +173,20 @@ function finishGuide() {
         const progressText = document.getElementById('progress-text');
         if (progressFill) progressFill.style.width = '100%';
         if (progressText) progressText.textContent = 'Tamamlandı!';
+
+        // Mark as completed on server
+        if (window.currentUser) {
+            const guideId = getGuideId();
+            fetch('/api/progress/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guide_id: parseInt(guideId) })
+            }).catch(err => console.log('Completion sync error:', err));
+        }
     }
 }
+
+// --- AI Support ---
 
 async function showProblem() {
     const activeCard = document.querySelector('.step-card.active');
