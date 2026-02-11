@@ -150,6 +150,29 @@ CREATE TABLE IF NOT EXISTS user_guide_progress (
     UNIQUE(user_id, guide_id)
 );
 
+-- Trusted Contacts (Refakatçi Modu)
+CREATE TABLE IF NOT EXISTS trusted_contacts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR NOT NULL,
+    phone VARCHAR NOT NULL,
+    relationship_label VARCHAR DEFAULT 'Yakın',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Companion Alerts
+CREATE TABLE IF NOT EXISTS companion_alerts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    contact_id INTEGER REFERENCES trusted_contacts(id) ON DELETE CASCADE,
+    guide_id INTEGER REFERENCES guides(id) ON DELETE SET NULL,
+    step_number INTEGER,
+    frustration_count INTEGER DEFAULT 3,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 INSERT INTO fraud_scenarios (scenario, correct_action, explanation, difficulty) VALUES
 ('Telefonda kendini polis veya savcı olarak tanıtan biri aradı. ''Adınız bir terör örgütü soruşturmasına karıştı, bankadaki paranızı güvence altına almamız lazım, size vereceğimiz hesap numarasına paranızı gönderin'' diyor.', 'hangup', 'Devlet görevlileri (Polis, Savcı, Jandarma) asla vatandaştan para istemez veya hesap numarası vermez. Bu en yaygın dolandırıcılık yöntemidir. Telefonu hemen kapatın ve 155''i arayın.', 1),
 ('Bankadan aradığını söyleyen bir kişi, ''Hesabınızdan şüpheli bir işlem yapıldı, iptal etmek için telefonunuza gelen şifreyi bize söyleyin'' diyor.', 'hangup', 'Bankalar asla telefonda şifrenizi veya onay kodunuzu istemez. Bu şifreler sadece sizin kullanımınız içindir. Kimseyle paylaşmayın.', 1),

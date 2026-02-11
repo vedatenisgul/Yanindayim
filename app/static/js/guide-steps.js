@@ -188,12 +188,19 @@ function finishGuide() {
 
 // --- AI Support ---
 
+let frustrationCount = 0;
+const FRUSTRATION_THRESHOLD = 3;
+let companionNotified = false; // prevent multiple notifications per session
+
 async function showProblem() {
     const activeCard = document.querySelector('.step-card.active');
     if (!activeCard) return;
 
     const stepNum = parseInt(activeCard.dataset.step);
     let guideId = getGuideId();
+
+    // Track frustration
+    frustrationCount++;
 
     const modal = document.getElementById('ai-support-modal');
     const guidanceText = document.getElementById('ai-guidance-text');
@@ -225,6 +232,11 @@ async function showProblem() {
             guidanceText.textContent = 'Şu an teknik bir aksaklık var ama endişelenmeyin, biz buradayız.';
         }
     }
+
+    // Check frustration threshold — offer companion notification
+    if (window.currentUser && frustrationCount >= FRUSTRATION_THRESHOLD && !companionNotified) {
+        setTimeout(() => showCompanionModal(guideId, stepNum), 1500);
+    }
 }
 
 function closeSupportModal() {
@@ -232,6 +244,90 @@ function closeSupportModal() {
     if (modal) {
         modal.style.display = 'none';
     }
+}
+
+// --- Companion Mode (Refakatçi Modu) ---
+
+function showCompanionModal(guideId, stepNum) {
+    // Inject modal if not present
+    if (!document.getElementById('companion-notify-modal')) {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div id="companion-notify-modal" class="companion-modal" style="display:flex;">
+                <div class="companion-modal-content">
+                    <div class="companion-modal-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                    </div>
+                    <h3>Refakatçinize Haber Verelim mi?</h3>
+                    <p>Bu adımda zorlandığınızı fark ettik. Güvenilir kişilerinize bildirim göndermek ister misiniz?</p>
+                    <div class="companion-modal-actions">
+                        <button class="nav-button secondary" onclick="closeCompanionModal()">Hayır, Teşekkürler</button>
+                        <button class="nav-button primary" onclick="sendCompanionNotify(${guideId}, ${stepNum})">Evet, Haber Verin</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(div.firstElementChild);
+    } else {
+        document.getElementById('companion-notify-modal').style.display = 'flex';
+    }
+}
+
+function closeCompanionModal() {
+    const modal = document.getElementById('companion-notify-modal');
+    if (modal) modal.style.display = 'none';
+    companionNotified = true; // don't show again this session
+}
+
+async function sendCompanionNotify(guideId, stepNum) {
+    closeCompanionModal();
+
+    try {
+        const res = await fetch('/api/companion/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                guide_id: parseInt(guideId),
+                step_number: stepNum,
+                frustration_count: frustrationCount
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            showCompanionToast(data.message);
+        } else if (data.error === 'Güvenilir kişi eklenmemiş') {
+            showCompanionToast('Henüz güvenilir kişi eklenmemiş. Profilinizden ekleyebilirsiniz.');
+        }
+    } catch (err) {
+        console.error('Companion notify error:', err);
+    }
+
+    companionNotified = true;
+}
+
+function showCompanionToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'companion-toast';
+    toast.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <span>${message}</span>
+    `;
+    document.body.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(() => toast.classList.add('show'));
+
+    // Remove after 4s
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+    }, 4000);
 }
 
 // Initialize progress on load

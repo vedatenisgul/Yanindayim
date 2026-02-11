@@ -13,6 +13,7 @@ class User(Base):
     role = Column(String, default="user")  # 'user' or 'admin'
 
     progress = relationship("UserGuideProgress", back_populates="user", cascade="all, delete-orphan")
+    contacts = relationship("TrustedContact", back_populates="user", cascade="all, delete-orphan")
 
 class Guide(Base):
     __tablename__ = "guides"
@@ -84,4 +85,33 @@ class UserGuideProgress(Base):
     completed_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="progress")
+    guide = relationship("Guide")
+
+class TrustedContact(Base):
+    __tablename__ = "trusted_contacts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String, nullable=False)
+    phone = Column(String, nullable=False)
+    relationship_label = Column(String, default="Yakın")  # e.g. Oğul, Kız, Komşu
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="contacts")
+
+class CompanionAlert(Base):
+    __tablename__ = "companion_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    contact_id = Column(Integer, ForeignKey("trusted_contacts.id"), nullable=False)
+    guide_id = Column(Integer, ForeignKey("guides.id"), nullable=True)
+    step_number = Column(Integer, nullable=True)
+    frustration_count = Column(Integer, default=3)
+    message = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")
+    contact = relationship("TrustedContact")
     guide = relationship("Guide")

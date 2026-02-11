@@ -38,6 +38,155 @@
             </div>
         </div>
 
+        <!-- Trusted Contacts Section (Refakatçi Modu) -->
+        <section class="profile-section contacts-section">
+            <h2 class="profile-section-title">
+                <span class="section-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg></span>
+                Güvenilir Kişilerim
+            </h2>
+            <p class="contacts-description">Bir rehberde zorlandığınızda bu kişilere bildirim gönderilir. En fazla 3
+                kişi ekleyebilirsiniz.</p>
+
+            <div id="contacts-list" class="contacts-list">
+                <!-- Dynamically populated by JS -->
+            </div>
+
+            <button id="add-contact-btn" class="add-contact-btn" onclick="openAddContactModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Kişi Ekle
+            </button>
+        </section>
+
+        <!-- Add Contact Modal -->
+        <div id="add-contact-modal" class="companion-modal" style="display:none;">
+            <div class="companion-modal-content">
+                <h3>Güvenilir Kişi Ekle</h3>
+                <div class="companion-form-group">
+                    <label for="contact-name">İsim</label>
+                    <input type="text" id="contact-name" placeholder="Örn: Ahmet" class="companion-input">
+                </div>
+                <div class="companion-form-group">
+                    <label for="contact-phone">Telefon</label>
+                    <input type="tel" id="contact-phone" placeholder="Örn: 0532 123 4567" class="companion-input">
+                </div>
+                <div class="companion-form-group">
+                    <label for="contact-relation">Yakınlık</label>
+                    <select id="contact-relation" class="companion-input">
+                        <option value="Oğul">Oğul</option>
+                        <option value="Kız">Kız</option>
+                        <option value="Eş">Eş</option>
+                        <option value="Torun">Torun</option>
+                        <option value="Komşu">Komşu</option>
+                        <option value="Arkadaş">Arkadaş</option>
+                        <option value="Yakın" selected>Diğer</option>
+                    </select>
+                </div>
+                <div class="companion-modal-actions">
+                    <button class="nav-button secondary" onclick="closeAddContactModal()">İptal</button>
+                    <button class="nav-button primary" onclick="saveContact()">Kaydet</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // --- Contacts Management ---
+            async function loadContacts() {
+                try {
+                    const res = await fetch('/api/contacts');
+                    const data = await res.json();
+                    const list = document.getElementById('contacts-list');
+                    const btn = document.getElementById('add-contact-btn');
+
+                    if (!data.success || !data.contacts) return;
+
+                    list.innerHTML = '';
+                    data.contacts.forEach(c => {
+                        const card = document.createElement('div');
+                        card.className = 'contact-card';
+                        card.innerHTML = `
+                        <div class="contact-info">
+                            <div class="contact-avatar">${c.name[0].toUpperCase()}</div>
+                            <div>
+                                <span class="contact-name">${c.name}</span>
+                                <span class="contact-detail">${c.relationship_label} · ${c.phone}</span>
+                            </div>
+                        </div>
+                        <button class="contact-delete" onclick="deleteContact(${c.id})" aria-label="Kişiyi sil">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    `;
+                        list.appendChild(card);
+                    });
+
+                    // Hide add button if 3 contacts
+                    btn.style.display = data.contacts.length >= 3 ? 'none' : 'inline-flex';
+                } catch (err) {
+                    console.log('Failed to load contacts:', err);
+                }
+            }
+
+            function openAddContactModal() {
+                document.getElementById('add-contact-modal').style.display = 'flex';
+            }
+
+            function closeAddContactModal() {
+                document.getElementById('add-contact-modal').style.display = 'none';
+                document.getElementById('contact-name').value = '';
+                document.getElementById('contact-phone').value = '';
+            }
+
+            async function saveContact() {
+                const name = document.getElementById('contact-name').value.trim();
+                const phone = document.getElementById('contact-phone').value.trim();
+                const relationship_label = document.getElementById('contact-relation').value;
+
+                if (!name || !phone) {
+                    alert('İsim ve telefon zorunludur');
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/api/contacts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, phone, relationship_label })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        closeAddContactModal();
+                        loadContacts();
+                    } else {
+                        alert(data.error || 'Bir hata oluştu');
+                    }
+                } catch (err) {
+                    alert('Bağlantı hatası');
+                }
+            }
+
+            async function deleteContact(id) {
+                if (!confirm('Bu kişiyi silmek istediğinize emin misiniz?')) return;
+                try {
+                    const res = await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (data.success) loadContacts();
+                } catch (err) {
+                    console.log('Delete failed:', err);
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', loadContacts);
+        </script>
+
         <!-- In Progress Section -->
         {% if in_progress %}
         <section class="profile-section">

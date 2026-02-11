@@ -4,8 +4,9 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import Guide, Idea, StepProblem, User, UserGuideProgress
+from app.models import Guide, Idea, StepProblem, User, UserGuideProgress, TrustedContact, CompanionAlert
 from app.utils.ai_utils import get_calming_guidance, get_ai_help_response, generate_fraud_scenario
+from app.utils.companion import format_companion_message
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -209,6 +210,144 @@ async def create_idea(request: Request, db: Session = Depends(get_db)):
     
     db.commit()
     return {"success": True}
+
+# ===== Companion Mode (Refakatçi Modu) =====
+
+@router.get("/api/contacts")
+async def list_contacts(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        return {"success": False, "error": "Not logged in"}
+
+    contacts = db.query(TrustedContact).filter(
+        TrustedContact.user_id == user_session["id"],
+        TrustedContact.is_active == True
+    ).order_by(TrustedContact.created_at).all()
+
+    return {
+        "success": True,
+        "contacts": [
+            {
+                "id": c.id,
+                "name": c.name,
+                "phone": c.phone,
+                "relationship_label": c.relationship_label
+            } for c in contacts
+        ]
+    }
+
+@router.post("/api/contacts")
+async def add_contact(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        return {"success": False, "error": "Not logged in"}
+
+    data = await request.json()
+    name = data.get("name", "").strip()
+    phone = data.get("phone", "").strip()
+    relationship_label = data.get("relationship_label", "Yakın").strip()
+
+    if not name or not phone:
+        return {"success": False, "error": "İsim ve telefon zorunludur"}
+
+    # Max 3 contacts
+    existing_count = db.query(TrustedContact).filter(
+        TrustedContact.user_id == user_session["id"],
+        TrustedContact.is_active == True
+    ).count()
+
+    if existing_count >= 3:
+        return {"success": False, "error": "En fazla 3 güvenilir kişi ekleyebilirsiniz"}
+
+    contact = TrustedContact(
+        user_id=user_session["id"],
+        name=name,
+        phone=phone,
+        relationship_label=relationship_label
+    )
+    db.add(contact)
+    db.commit()
+
+    return {
+        "success": True,
+        "contact": {
+            "id": contact.id,
+            "name": contact.name,
+            "phone": contact.phone,
+            "relationship_label": contact.relationship_label
+        }
+    }
+
+@router.delete("/api/contacts/{contact_id}")
+async def delete_contact(request: Request, contact_id: int, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        return {"success": False, "error": "Not logged in"}
+
+    contact = db.query(TrustedContact).filter(
+        TrustedContact.id == contact_id,
+        TrustedContact.user_id == user_session["id"]
+    ).first()
+
+    if not contact:
+        return {"success": False, "error": "Kişi bulunamadı"}
+
+    contact.is_active = False
+    db.commit()
+    return {"success": True}
+
+@router.post("/api/companion/notify")
+async def companion_notify(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        return {"success": False, "error": "Not logged in"}
+
+    data = await request.json()
+    guide_id = data.get("guide_id")
+    step_number = data.get("step_number", 1)
+    frustration_count = data.get("frustration_count", 3)
+
+    user_id = user_session["id"]
+    user_name = user_session.get("name", "Kullanıcı")
+
+    # Get guide title
+    guide_title = "Bilinmeyen Rehber"
+    if guide_id:
+        guide = db.query(Guide).filter(Guide.id == guide_id).first()
+        if guide:
+            guide_title = guide.title
+
+    # Get active contacts
+    contacts = db.query(TrustedContact).filter(
+        TrustedContact.user_id == user_id,
+        TrustedContact.is_active == True
+    ).all()
+
+    if not contacts:
+        return {"success": False, "error": "Güvenilir kişi eklenmemiş"}
+
+    # Create alerts for all active contacts
+    notified_names = []
+    for contact in contacts:
+        message = format_companion_message(user_name, guide_title, step_number, frustration_count)
+        alert = CompanionAlert(
+            user_id=user_id,
+            contact_id=contact.id,
+            guide_id=guide_id,
+            step_number=step_number,
+            frustration_count=frustration_count,
+            message=message
+        )
+        db.add(alert)
+        notified_names.append(contact.name)
+
+    db.commit()
+
+    return {
+        "success": True,
+        "notified": notified_names,
+        "message": f"{', '.join(notified_names)} bilgilendirildi"
+    }
 
 @router.post("/api/guides/report-problem")
 async def report_problem(request: Request, db: Session = Depends(get_db)):
