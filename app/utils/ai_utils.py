@@ -2,85 +2,100 @@ import google.generativeai as genai
 import os
 import json
 import logging
-import requests
-import time
 import hashlib
-from io import BytesIO
 
 # Configure logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from huggingface_hub import InferenceClient
-
 # Configure API Keys
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-HF_API_KEY = os.getenv("HUGGINGFACE_API_KEY") or os.getenv("HF_TOKEN")
 
 if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
 
 def generate_step_image(guide_title: str, step_title: str, step_description: str) -> str:
     """
-    Generates a representative UI illustration for a guide step via Hugging Face InferenceClient.
+    Generates a clean SVG vector illustration for a guide step using Gemini.
     Saves it locally and returns the static path.
     """
-    if not HF_API_KEY:
-        logger.warning("HF token yok. Placeholder kullanılacak.")
+    if not GOOGLE_API_KEY:
+        logger.warning("GOOGLE_API_KEY yok. SVG üretilemedi.")
         return None
-
-    # Construct Ultra-Minimalist Icon Prompt
-    positive_prompt = f"""
-Ultra-minimalist flat design icon, simple vector art, white background.
-A single, large, clear object representing: {step_title}.
-Thick clean lines, soft corporate blue and gray colors.
-No background details, no complex scenes, just a clean icon.
-Professional 2D flat design, crisp edges, high contrast.
-"""
-    negative_prompt = "complex scene, artistic illustration, realistic, messy, colorful, multiple objects, backgrounds, shadows, gradient, faces, people, text, letters, small details, blurry, low quality"
 
     # Create storage dir if not exists
     os.makedirs("app/static/generated", exist_ok=True)
     
-    # Generate unique filename based on prompts
+    # Generate unique filename based on content
     prompt_hash = hashlib.md5(f"{step_title}{step_description}".encode()).hexdigest()
-    filename = f"step_{prompt_hash}.png"
+    filename = f"step_{prompt_hash}.svg"
     filepath = os.path.join("app/static/generated", filename)
     static_url = f"/static/generated/{filename}"
 
     # Cache check
     if os.path.exists(filepath):
-        logger.info(f"Image already exists: {static_url}")
+        logger.info(f"SVG already exists: {static_url}")
         return static_url
 
-    # Inference Providers client
-    # Switching to "hf-inference" which is the standard serverless inference provider
-    # This should be more compatible than third-party providers like fal-ai or nscale
-    client = InferenceClient(
-        provider="hf-inference",
-        api_key=HF_API_KEY,
-    )
-
-    # Model: Using SDXL which is robust and usually supported on standard inference.
-    model_id = "stabilityai/stable-diffusion-xl-base-1.0"
-
     try:
-        logger.info(f"IMAGE GEN: Starting for '{step_title}' using InferenceClient (serverless) with {model_id}")
+        model = genai.GenerativeModel('gemini-2.0-flash')
         
-        img = client.text_to_image(
-            positive_prompt,
-            model=model_id,
-            negative_prompt=negative_prompt,
-            width=1024,
-            height=512,
-        )
+        svg_prompt = f"""Generate a clean, minimalist SVG illustration for this guide step.
+
+Guide: {guide_title}
+Step: {step_title}
+Description: {step_description}
+
+SVG Requirements:
+- Viewbox: 0 0 400 240
+- Ultra-minimalist flat design, like a modern app onboarding illustration
+- Use a soft, professional color palette: primary #4A90D9 (blue), secondary #6C63FF (purple-blue), accent #F5A623 (warm orange), light grays #F0F0F0, #E0E0E0
+- White or very light background (#FAFAFA)
+- Simple geometric shapes: rounded rectangles, circles, simple icons
+- NO text elements, NO <text> tags, NO letters or words inside the SVG
+- NO complex paths or detailed illustrations
+- Think of it as a simple, friendly icon/illustration that represents the action
+- Use thick strokes (stroke-width 2-3) for clarity
+- Maximum 15-20 SVG elements to keep it clean
+- The illustration should be immediately understandable by an elderly person
+
+Return ONLY the raw SVG code starting with <svg and ending with </svg>. No markdown, no explanation, no code blocks."""
+
+        response = model.generate_content(svg_prompt)
+        svg_content = response.text.strip()
         
-        img.save(filepath)
-        logger.info(f"IMAGE GEN SUCCESS: {static_url}")
+        # Clean up: extract just the SVG if wrapped in markdown
+        if "```" in svg_content:
+            # Extract content between code blocks
+            lines = svg_content.split("\n")
+            in_block = False
+            svg_lines = []
+            for line in lines:
+                if line.strip().startswith("```"):
+                    in_block = not in_block
+                    continue
+                if in_block:
+                    svg_lines.append(line)
+            svg_content = "\n".join(svg_lines)
+        
+        # Ensure it starts with <svg
+        svg_start = svg_content.find("<svg")
+        svg_end = svg_content.rfind("</svg>")
+        if svg_start != -1 and svg_end != -1:
+            svg_content = svg_content[svg_start:svg_end + 6]
+        else:
+            logger.error(f"SVG GEN: Invalid SVG output for '{step_title}'")
+            return None
+        
+        # Save the SVG file
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(svg_content)
+        
+        logger.info(f"SVG GEN SUCCESS: {static_url} ({len(svg_content)} bytes)")
         return static_url
 
     except Exception as e:
-        logger.error(f"IMAGE GEN failed: {e}")
+        logger.error(f"SVG GEN failed for '{step_title}': {e}")
         return None
 
 def generate_guide_with_ai(prompt: str) -> dict:
